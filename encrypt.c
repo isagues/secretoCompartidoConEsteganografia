@@ -1,5 +1,6 @@
 #include "encrypt.h"
 #define SHADES_NUMBER 8
+#define GENERATOR_POL 0x163
 
 //source: https://stackoverflow.com/questions/29379006/calculate-parity-bit-from-string-in-c/29381551#29381551
 #define PARITY_BIT(t) (0x6996u >> ((t ^ (t >> 4)) & 0xf)) & 1
@@ -14,7 +15,7 @@ typedef struct ShadeBlock
 } ShadeBlock;
 
 
-static void get_shadeblock_indexes(BMPImage image, int index, int * x_row, int * x_col){
+static void get_shadeblock_indexes(BMPImage image, size_t index, size_t * x_row, size_t * x_col){
     //Divido la imagen a la mitad para separarla en cantidad de bloques
 
     //En row es division porque hasta que no se pase de cantidad de bloques esta en la misma fila
@@ -25,15 +26,15 @@ static void get_shadeblock_indexes(BMPImage image, int index, int * x_row, int *
     x_col = (index % (image.width / 2)) * 2;
 }
 
-static ShadeBlock get_shadeblock_from_index(BMPImage image, int index){
+static ShadeBlock get_shadeblock_from_index(BMPImage image, size_t index){
     
-    int x_row, x_col;
+    size_t x_row, x_col;
 
     get_shadeblock_indexes(image, index, &x_row, &x_col);
    
     ShadeBlock shadeBlock;
 
-    shadeBlock.x =  image.data[x_row][x_col];
+    shadeBlock.x = image.data[x_row][x_col];
     shadeBlock.w = image.data[x_row][x_col + 1];
 
     //Se resta porque las imagenes tienen los pixeles al reves, las columnas si estan en orden
@@ -43,8 +44,8 @@ static ShadeBlock get_shadeblock_from_index(BMPImage image, int index){
     return shadeBlock;
 }
 
-static void set_shadeblock_from_index(BMPImage image, int index, ShadeBlock newShadeBlock){
-    int x_row, x_col;
+static void set_shadeblock_from_index(BMPImage image, size_t index, ShadeBlock newShadeBlock){
+    size_t x_row, x_col;
 
     get_shadeblock_indexes(image, index, &x_row, &x_col);
 
@@ -56,6 +57,17 @@ static void set_shadeblock_from_index(BMPImage image, int index, ShadeBlock newS
 }
 
 static ShadeBlock distribute_t_value(ShadeBlock shadeBlock, uint8_t auxT, uint8_t parityBit){
+    
+    shadeBlock.w &= 0xF8;
+    shadeBlock.w |= (auxT >> 5) & 0x07;
+    
+    shadeBlock.v &= 0xF8;
+    shadeBlock.v |= (auxT >> 2) & 0x07;
+    
+    shadeBlock.u &= 0xF8;
+    shadeBlock.u |= auxT & 0x03;
+    shadeBlock.u |= parityBit << 2;
+    
     return shadeBlock;
 }
 
