@@ -1,6 +1,6 @@
 #include "galois.h"
 
-
+// https://en.wikipedia.org/wiki/Finite_field_arithmetic#Program_examples
 /* Add two numbers in the GF(2^8) finite field */
 uint8_t gadd(uint8_t a, uint8_t b) {
 	return a ^ b;
@@ -18,7 +18,7 @@ uint8_t gmul(uint8_t a, uint8_t b) {
                 p ^= a; /* since we're in GF(2^m), addition is an XOR */
 
             if (a & 0x80) /* GF modulo: if a >= 128, then it will overflow when shifted left, so reduce */
-                a = (a << 1) ^ 0x11b; /* XOR with the primitive polynomial x^8 + x^4 + x^3 + x + 1 (0b1_0001_1011) – you can change it but it must be irreducible */
+                a = (a << 1) ^ GENERATOR_POL; /* XOR with the primitive polynomial x^8 + x^4 + x^3 + x + 1 (0b1_0001_1011) – you can change it but it must be irreducible */
             else
                 a <<= 1; /* equivalent to a*2 */
             b >>= 1; /* equivalent to b // 2 */
