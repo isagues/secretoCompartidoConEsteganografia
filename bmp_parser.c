@@ -1,8 +1,7 @@
-// bmp_parser.c
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-// #include <byteswap.h> // Swapear Bigendian a Littleendian
+#include "bmp_parser.h"
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
 
 typedef struct BMPFileHeader {
     uint8_t     type[2];
@@ -26,36 +25,11 @@ typedef struct BMPInfoHeader {    // bmih
     uint32_t    colorsImportant;
 } BMPInfoHeader;
 
-typedef struct BMPImage {
-    uint8_t   **data;
-    uint64_t    size;
-    uint64_t    width;
-    uint64_t    height;
-} BMPImage;
-
 static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh);
+
 static void bmp_read_info_header(FILE * fStream, BMPInfoHeader *ih);
+
 static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, uint32_t height);
-BMPImage* bmp_read_file(char * path, BMPImage *img);
-void bmp_swap_rows(BMPImage *img);
-
-int main() {
-
-    BMPImage image;
-
-    bmp_read_file("lena_gray.bmp", &image);
-
-    printf("Size: %ld\n", image.size);
-    printf("Width: %ld\n", image.width);
-    printf("Height: %ld\n", image.height);
-
-    bmp_swap_rows(&image);
-
-    for (size_t i = 0; i < image.height; i++){
-        printf("%4X", image.data[i][0]);
-    }
-    
-}
 
 BMPImage* bmp_read_file(char *path, BMPImage *img){
 
@@ -133,4 +107,57 @@ static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, 
     }
 
     return buff;
+}
+
+Shades get_images_from_directory(char * directoryPath){
+    
+    DIR* FD;
+    struct dirent* in_file;
+    FILE    *common_file;
+    FILE    *entry_file;
+    Shades shades;
+    shades.size = 0;
+    shades.images = NULL;
+
+    if (NULL == (FD = opendir (directoryPath))) 
+    {
+        fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
+        fclose(common_file);
+
+        exit(1);
+    }
+
+    while ((in_file = readdir(FD))) 
+    {
+        /* On linux/Unix we don't want current and parent directories
+         * On windows machine too, thanks Greg Hewgill
+         */
+        if (!strcmp (in_file->d_name, "."))
+            continue;
+        if (!strcmp (in_file->d_name, ".."))    
+            continue;
+        if (in_file->d_reclen < sizeof(".bmp") || !strcmp (in_file->d_name + in_file->d_reclen - 5, ".bmp"))    
+            continue;
+
+        /* Open directory entry file for common operation */
+        /* TODO : change permissions to meet your need! */
+        entry_file = fopen(in_file->d_name, "rw");
+
+        if (entry_file == NULL)
+        {
+            fprintf(stderr, "Error : Failed to open entry file - %s\n", strerror(errno));
+            fclose(common_file);
+
+            exit(1);
+        }
+        
+        shades.size++;
+        realloc(shades.images, sizeof(*shades.images) * (shades.size));
+        
+        if(bmp_read_file(in_file->d_name, &shades.images[shades.size - 1]) == NULL) {
+            printf("Error openning %s", in_file->d_name);
+            exit(1);
+        }
+    
+    return shades;
 }
