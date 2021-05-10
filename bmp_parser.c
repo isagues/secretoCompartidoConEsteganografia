@@ -1,7 +1,9 @@
 #include "bmp_parser.h"
+#include <string.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+#include <linux/limits.h>
 
 typedef struct BMPFileHeader {
     uint8_t     type[2];
@@ -38,6 +40,15 @@ BMPImage* bmp_read_file(char *path, BMPImage *img){
 
     FILE *fStream = fopen(path, "r");
 
+    if (fStream == NULL)
+        {
+            fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
+            fclose(fStream);
+
+            exit(1);
+        }
+        
+
     if (fStream == NULL) {
         perror("Error openning image file");
         exit(1);
@@ -50,6 +61,8 @@ BMPImage* bmp_read_file(char *path, BMPImage *img){
     img->width = infoHeader.width;
     img->height = infoHeader.height;
     img->data = bmp_read_data(fStream, fileHeader.offset, img->width, img->height);
+
+    fclose(fStream);
 
     return img; // Se puede devolver NULL en caso de erorr.
 }
@@ -109,20 +122,31 @@ static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, 
     return buff;
 }
 
-Shades get_images_from_directory(char * directoryPath){
+uint8_t * bmp_image_to_array(BMPImage image){
+    uint8_t * data_array = malloc(image.size * sizeof(uint8_t));
+
+    for (size_t i = 0; i < image.height; i++)
+    {
+        memcpy(data_array + i*image.width, image.data[i], image.width);
+        
+    }
+    return data_array;
+}
+
+// source: https://stackoverflow.com/questions/11736060/how-to-read-all-files-in-a-folder-using-c/11737506#11737506
+BMPImagesCollection get_images_from_directory(char * directoryPath){
     
     DIR* FD;
     struct dirent* in_file;
-    FILE    *common_file;
-    FILE    *entry_file;
-    Shades shades;
-    shades.size = 0;
-    shades.images = NULL;
+    BMPImagesCollection imagesCollection;
+    imagesCollection.size = 0;
+    imagesCollection.images = NULL;
+
+    char filename[PATH_MAX];
 
     if (NULL == (FD = opendir (directoryPath))) 
     {
         fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
-        fclose(common_file);
 
         exit(1);
     }
@@ -141,23 +165,18 @@ Shades get_images_from_directory(char * directoryPath){
 
         /* Open directory entry file for common operation */
         /* TODO : change permissions to meet your need! */
-        entry_file = fopen(in_file->d_name, "rw");
-
-        if (entry_file == NULL)
-        {
-            fprintf(stderr, "Error : Failed to open entry file - %s\n", strerror(errno));
-            fclose(common_file);
-
-            exit(1);
+        sprintf(filename, "%s/%s", directoryPath, in_file->d_name);
+        printf("%s/n", filename);
+        imagesCollection.size++;
+        if((imagesCollection.images = realloc(imagesCollection.images, sizeof(*imagesCollection.images) * (imagesCollection.size))) == NULL){
+            printf("Not enough space for images");
+            exit(1);  
         }
         
-        shades.size++;
-        realloc(shades.images, sizeof(*shades.images) * (shades.size));
-        
-        if(bmp_read_file(in_file->d_name, &shades.images[shades.size - 1]) == NULL) {
+        if(bmp_read_file(filename, &imagesCollection.images[imagesCollection.size - 1]) == NULL) {
             printf("Error openning %s", in_file->d_name);
             exit(1);
         }
-    
-    return shades;
+    }
+    return imagesCollection;
 }

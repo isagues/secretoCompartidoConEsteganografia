@@ -3,9 +3,10 @@
 
 #include "galois.h"
 #include "bmp_parser.h"
+#include "shades.h"
 
 
-Shades encrypt(uint8_t * secret, size_t size, Shades initial_shades, int k);
+BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, size_t k);
 
 
 #endif

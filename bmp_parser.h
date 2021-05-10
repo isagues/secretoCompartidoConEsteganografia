@@ -13,15 +13,17 @@ typedef struct BMPImage {
     uint64_t    height;
 } BMPImage;
 
-typedef struct Shades {
+typedef struct BMPImagesCollection {
     uint8_t size;
-    BMPImage * images;
-} Shades;
+    BMPImage *images;
+} BMPImagesCollection;
+
+uint8_t * bmp_image_to_array(BMPImage image);
 
 BMPImage* bmp_read_file(char * path, BMPImage *img);
 
 void bmp_swap_rows(BMPImage *img);
 
-Shades get_images_from_directory(char * directoryPath);
+BMPImagesCollection get_images_from_directory(char * directoryPath);
 
 #endif
