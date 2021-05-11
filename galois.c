@@ -25,3 +25,22 @@ uint8_t gmul(uint8_t a, uint8_t b) {
 	}
 	return p;
 }
+
+uint8_t gpow(uint8_t base, uint8_t exp) {
+    int result = base;
+    for (uint8_t i = 0; i < exp; i++)   
+    {
+        result = gmul(result, base);
+    }
+    return result;
+}
+
+uint8_t evaluate_pol(uint8_t * coeficients, uint8_t size, uint8_t x_value) {
+    uint8_t result = coeficients[0];
+    
+    for (uint8_t i = 1; i < size; i++)
+    {
+        result = gadd(result, gmul(coeficients[i], gpow(x_value, i)));
+    }
+    return result;
+}
