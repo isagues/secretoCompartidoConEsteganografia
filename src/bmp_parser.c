@@ -6,13 +6,14 @@
 // TODO(tobi): No usar linux/ porque noss lockea al OS
 #include <linux/limits.h>
 
+//TODO(nacho, faus): Por ahora esta con packing. Habria que ver cuando funciona y si son los casos de uso esperados.
 typedef struct BMPFileHeader {
     uint8_t     type[2];
     uint32_t    fileSize;
     uint16_t    reserved1;
     uint16_t    reserved2;
     uint32_t    offset;
-} BMPFileHeader;
+} __attribute__((packed)) BMPFileHeader;
 
 typedef struct BMPInfoHeader {    // bmih
     uint32_t    headerSize;
@@ -26,7 +27,7 @@ typedef struct BMPInfoHeader {    // bmih
     uint32_t    YPelsPerMeter;
     uint32_t    colorsUsed;
     uint32_t    colorsImportant;
-} BMPInfoHeader;
+} __attribute__((packed)) BMPInfoHeader;
 
 static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh);
 
@@ -55,8 +56,11 @@ BMPImage* bmp_read_file(char *path, BMPImage *img){
         exit(1);
     }
 
-    bmp_read_file_header(fStream, &fileHeader);
-    bmp_read_info_header(fStream, &infoHeader);
+    fread(&fileHeader, sizeof(fileHeader), 1, fStream);
+    fread(&infoHeader, sizeof(infoHeader), 1, fStream);
+
+    // bmp_read_file_header(fStream, &fileHeader);
+    // bmp_read_info_header(fStream, &infoHeader);
 
     img->size = fileHeader.fileSize - fileHeader.offset;
     img->width = infoHeader.width;
