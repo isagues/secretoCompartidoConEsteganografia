@@ -1,5 +1,8 @@
 #include "shades.h"
 
+//source: https://stackoverflow.com/questions/29379006/calculate-parity-bit-from-string-in-c/29381551#29381551
+#define PARITY_BIT(t) (0x6996u >> ((t ^ (t >> 4)) & 0xf)) & 1
+
 static void get_shadeblock_indexes(BMPImage image, size_t index, size_t * x_row, size_t * x_col){
     //Divido la imagen a la mitad para separarla en cantidad de bloques
 
@@ -41,7 +44,10 @@ void set_shadeblock_from_index(BMPImage image, size_t index, ShadeBlock newShade
 
 }
 
-ShadeBlock distribute_t_value(ShadeBlock shadeBlock, uint8_t auxT, uint8_t parityBit){
+ShadeBlock distribute_t_value(ShadeBlock shadeBlock, uint8_t auxT){
+
+    //calcular bit de paridad de auxT
+    uint8_t parityBit = PARITY_BIT(auxT);
     
     shadeBlock.w &= 0xF8;                   // 0xF8 = 1111 1000
     shadeBlock.w |= (auxT >> 5) & 0x07;     // 0x07 = 0000 0111

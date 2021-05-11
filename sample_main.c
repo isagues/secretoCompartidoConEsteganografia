@@ -26,4 +26,5 @@ int main() {
     {
         printf("%4X", final_shades.images[0].data[i][0]);
     }
+    //TODO repartir las shades en el directorio, habria que copiar el header de las shades para copiar
 }
