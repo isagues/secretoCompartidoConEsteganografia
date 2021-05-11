@@ -55,3 +55,22 @@ ShadeBlock distribute_t_value(ShadeBlock shadeBlock, uint8_t auxT, uint8_t parit
     
     return shadeBlock;
 }
+
+ShadeBlock guarantee_different_x_values(ShadeBlock shadeBlock, uint8_t * xValues, size_t limit){
+    
+    int valueIsPresent = 0;
+    
+    for (size_t i = 0; i < limit; i++) {
+        
+        if (shadeBlock.x == xValues[i])
+            valueIsPresent = 1;
+
+        // TODO(nacho, faus): Se podria mejorar para que cuando llegue a 255 no salte a 0 y cambie el color abrutamente.
+        if(valueIsPresent){
+            shadeBlock.x = shadeBlock.x + 1 % 255;
+            i = 0;
+            valueIsPresent = 0;
+        }
+    }
+    return shadeBlock;
+}

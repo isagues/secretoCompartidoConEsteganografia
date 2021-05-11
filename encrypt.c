@@ -7,22 +7,16 @@
 
 
 uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x){
-    return 0x89;
+    return evaluate_pol(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
 }
 
-BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, size_t k) {
+BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k) {
 
-    if (k == 0){
-        printf("k value cannot be zero\n");
+    if (k == 0 || k > 256 || (size % k) != 0){
+        printf("invalid value for k = %c\n", k);
         exit(1);
     }
     
-
-    if((size % k) != 0) {
-        printf("Number k of shades is not a multiple of %d\n", SHADES_NUMBER);
-        return initial_shades;
-    }
-
     size_t blockCount = size / k;
     
     if(initial_shades.size < k || blockCount > initial_shades.images[0].size/4 || ){
@@ -42,18 +36,21 @@ BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection i
     ShadeBlock shadeBlock;
     uint8_t auxT;
     uint8_t parityBit;
+    uint8_t *xValues = malloc(initial_shades.size*sizeof(uint8_t));
 
     for (size_t j = 0; j < blockCount; j++) {
-
+    
         memcpy(secretBlock, secret + j*k, k); //1 conseguir k pixeles del offset
         
         // Indices de esta forma para poder seguir con la convencion del paper
         for (size_t i = 0; i < initial_shades.size; i++) {
             shadeBlock = get_shadeblock_from_index(initial_shades.images[i], j); //2 conseguir las SHADES_NUMBER matrices de 2*2
             
+            shadeBlock = guarantee_different_x_values(shadeBlock, xValues, i - 1);
+
+            xValues[i] = shadeBlock.x;
+
             auxT = encrypt_function(secretBlock, k, shadeBlock.x); // s1 + s2*X + ... +sk*X^k-1 mod g(x)
-            
-            // TODO(nacho, faus): shadeBlock = guarantee_different_x_values(shadeBlock);
             
             //calcular bit de paridad de auxT
             parityBit = PARITY_BIT(auxT);

@@ -6,7 +6,7 @@
 #include "shades.h"
 
 
-BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, size_t k);
+BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k);
 
 
 #endif

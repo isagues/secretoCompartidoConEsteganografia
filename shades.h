@@ -20,5 +20,6 @@ void set_shadeblock_from_index(BMPImage image, size_t index, ShadeBlock newShade
 
 ShadeBlock distribute_t_value(ShadeBlock shadeBlock, uint8_t auxT, uint8_t parityBit);
 
+ShadeBlock guarantee_different_x_values(ShadeBlock shadeBlock, uint8_t * xValues, size_t limit);
 
 #endif

@@ -178,5 +178,7 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
             exit(1);
         }
     }
+
+    closedir(FD);
     return imagesCollection;
 }
