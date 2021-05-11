@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
+// TODO(tobi): No usar linux/ porque noss lockea al OS
 #include <linux/limits.h>
 
 typedef struct BMPFileHeader {
@@ -77,7 +78,7 @@ void bmp_swap_rows(BMPImage *img) {
 }
 
 static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh) {
-    
+    // TODO(tobi): Ver si se puede hacer de una
     fread(&fh->type,         sizeof(fh->type),        1,  fStream);
     fread(&fh->fileSize,     sizeof(fh->fileSize),    1,  fStream);
     fread(&fh->reserved1,    sizeof(fh->reserved1),   1,  fStream);
@@ -123,7 +124,7 @@ static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, 
 }
 
 uint8_t * bmp_image_to_array(BMPImage image){
-    uint8_t * data_array = malloc(image.size * sizeof(uint8_t));
+    uint8_t * data_array = malloc(image.size * sizeof(uint8_t));    
 
     for (size_t i = 0; i < image.height; i++)
     {

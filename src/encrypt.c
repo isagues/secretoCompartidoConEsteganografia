@@ -11,7 +11,8 @@ uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x){
 
 BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k) {
 
-    if (k == 0 || (size % k) != 0){
+    // TODO(tobi): Agregar padding
+    if (k == 0 || k > 256 || (size % k) != 0){
         printf("invalid value for k = %c\n", k);
         exit(1);
     }
