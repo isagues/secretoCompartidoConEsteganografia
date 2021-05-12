@@ -1,6 +1,9 @@
 TESTS := $(patsubst %.test.c, %.test, $(wildcard *.test.c))
 
-LIBRARIES = -lcheck -lrt -lpthread -lm -lsubunit
+TEST_LIBRARIES = -lcheck -lrt -lpthread -lm -lsubunit
+
+TEST_SOURCES = test_utils.c
+TEST_OBJECTS := $(TEST_SOURCES:.c=.o)
 
 test: $(TESTS)
 
@@ -9,8 +12,8 @@ test: $(TESTS)
 	./$^
 
 # Compile
-%.test.tmp: %.test.c
-	$(CC) $(CFLAGS) $(SRC_OBJECTS) $^ -o $@ $(LIBRARIES)
+%.test.tmp: %.test.c $(TEST_OBJECTS)
+	$(CC) $(CFLAGS) $(SRC_OBJECTS) $^ -o $@ $(LIBRARIES) $(TEST_LIBRARIES)
 
 clean:
 	$(RM) $(patsubst %.test.c, %.test.tmp, $(wildcard *.test.c))

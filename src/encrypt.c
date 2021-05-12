@@ -1,17 +1,16 @@
+#include <encrypt.h>
+
 #include <string.h>
-#include "encrypt.h"
-
-
-
-
 
 uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x){
-    return evaluate_pol(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
+    return galois_poly_eval(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
 }
 
 BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k) {
 
-    // TODO(tobi): Agregar padding
+    //TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
+
+    // TODO(tobi): Agregar padding para manejar cualquier valor de k
     if (k == 0 || k > 256 || (size % k) != 0){
         printf("invalid value for k = %c\n", k);
         exit(1);
