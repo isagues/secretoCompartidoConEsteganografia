@@ -2,9 +2,6 @@
 #include "encrypt.h"
 
 
-
-
-
 uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x){
     return evaluate_pol(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
 }
@@ -12,7 +9,7 @@ uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x){
 BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k) {
 
     // TODO(tobi): Agregar padding
-    if (k == 0 || k > 256 || (size % k) != 0){
+    if (k == 0  || (size % k) != 0){
         printf("invalid value for k = %c\n", k);
         exit(1);
     }
@@ -62,4 +59,16 @@ BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection i
         }  
     }
     return initial_shades;
+}
+
+void persist_new_shades(char * dirPath, BMPImagesCollection final_shades, BMPHeader header){
+
+    char auxPath[255];
+    
+    for (size_t i = 0; i < final_shades.size; i++)
+    {
+        sprintf(auxPath, "%s/shade_%ld.bmp", dirPath, i);
+        persist_bmp_image(auxPath, header, final_shades.images[i]);
+    }
+    
 }

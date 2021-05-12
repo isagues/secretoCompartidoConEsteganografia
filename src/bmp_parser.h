@@ -6,6 +6,10 @@
 #include <stdlib.h>
 // #include <byteswap.h> // Swapear Bigendian a Littleendian
 
+typedef struct BMPHeader {
+    uint8_t *data;
+    size_t size;
+} BMPHeader;
 typedef struct BMPImage {
     uint8_t   **data;
     uint64_t    size;
@@ -20,10 +24,14 @@ typedef struct BMPImagesCollection {
 
 uint8_t * bmp_image_to_array(BMPImage image);
 
+BMPHeader* bmp_read_header(char *path, BMPHeader* header);
+
 BMPImage* bmp_read_file(char * path, BMPImage *img);
 
 void bmp_swap_rows(BMPImage *img);
 
 BMPImagesCollection get_images_from_directory(char * directoryPath);
+
+void persist_bmp_image(char * auxPath, BMPHeader header, BMPImage image);
 
 #endif

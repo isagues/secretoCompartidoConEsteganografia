@@ -3,7 +3,10 @@
 
 int main() {
 
+    BMPHeader header;
     BMPImage secretImage;
+
+    bmp_read_header("images/Gustavo300.bmp", &header);
 
     bmp_read_file("images/Gustavo300.bmp", &secretImage);
 
@@ -22,5 +25,8 @@ int main() {
     for (size_t i = 0; i < final_shades.images[0].height; i++) {
         printf("%4X", final_shades.images[0].data[i][0]);
     }
-    //TODO repartir las shades en el directorio, habria que copiar el header de las shades para copiar
+    
+    persist_new_shades("images", final_shades, header);
+
+    //TODO (faus, nacho) hacer los 80 free que nos faltan
 }

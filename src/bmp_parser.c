@@ -3,8 +3,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-// TODO(tobi): No usar linux/ porque noss lockea al OS
-#include <linux/limits.h>
+#define PATH_MAX 4096
 
 //TODO(nacho, faus): Por ahora esta con packing. Habria que ver cuando funciona y si son los casos de uso esperados.
 typedef struct BMPFileHeader {
@@ -34,6 +33,41 @@ static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh);
 static void bmp_read_info_header(FILE * fStream, BMPInfoHeader *ih);
 
 static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, uint32_t height);
+
+BMPHeader* bmp_read_header(char *path, BMPHeader* header){
+    
+    FILE *fStream = fopen(path, "r");
+
+    if (fStream == NULL)
+        {
+            fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
+            fclose(fStream);
+
+            exit(1);
+        }
+        
+
+    if (fStream == NULL) {
+        perror("Error openning image file");
+        exit(1);
+    }
+
+    BMPFileHeader fileHeader;
+    fread(&fileHeader, sizeof(fileHeader), 1, fStream);
+
+    header->data = malloc(fileHeader.offset);
+
+    fseek(fStream, 0, SEEK_SET);
+
+    if(fread(header->data, 1, fileHeader.offset, fStream) != fileHeader.offset) {
+        printf("Could not read file's %s header", path);
+        exit(1);
+    }
+    header->size = fileHeader.offset;
+    fclose(fStream);
+
+    return header;
+}
 
 BMPImage* bmp_read_file(char *path, BMPImage *img){
 
@@ -186,4 +220,33 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
 
     closedir(FD);
     return imagesCollection;
+}
+
+void persist_bmp_image(char * auxPath, BMPHeader header, BMPImage image){
+
+    //TODO (faus, nacho) se estan creando nuevas shades pero no se pisan
+    FILE *fStream = fopen(auxPath, "w+");
+    
+    if (fStream == NULL)
+        {
+            fprintf(stderr, "Error : Failed to open entry file %s - %s\n", auxPath, strerror(errno));
+            fclose(fStream);
+
+            exit(1);
+        }
+        
+
+    if (fStream == NULL) {
+        perror("Error openning image file");
+        exit(1);
+    }
+
+    fwrite(header.data, 1, header.size, fStream);
+    
+    for (size_t i = 0; i < image.height; i++)
+    {
+        fwrite(image.data[i], 1, image.width, fStream);
+    }
+
+    fclose(fStream);
 }
