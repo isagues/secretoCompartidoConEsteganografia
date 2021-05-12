@@ -38,13 +38,12 @@ BMPHeader* bmp_read_header(char *path, BMPHeader* header){
     
     FILE *fStream = fopen(path, "r");
 
-    if (fStream == NULL)
-        {
-            fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
-            fclose(fStream);
+    if (fStream == NULL) {
+        fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
+        fclose(fStream);
 
-            exit(1);
-        }
+        exit(1);
+    }
         
 
     if (fStream == NULL) {
@@ -76,13 +75,12 @@ BMPImage* bmp_read_file(char *path, BMPImage *img){
 
     FILE *fStream = fopen(path, "r");
 
-    if (fStream == NULL)
-        {
-            fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
-            fclose(fStream);
+    if (fStream == NULL) {
+        fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
+        fclose(fStream);
 
-            exit(1);
-        }
+        exit(1);
+    }
         
 
     if (fStream == NULL) {
@@ -116,7 +114,6 @@ void bmp_swap_rows(BMPImage *img) {
 }
 
 static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh) {
-    // TODO(tobi): Ver si se puede hacer de una
     fread(&fh->type,         sizeof(fh->type),        1,  fStream);
     fread(&fh->fileSize,     sizeof(fh->fileSize),    1,  fStream);
     fread(&fh->reserved1,    sizeof(fh->reserved1),   1,  fStream);
@@ -164,8 +161,7 @@ static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, 
 uint8_t * bmp_image_to_array(BMPImage image){
     uint8_t * data_array = malloc(image.size * sizeof(uint8_t));    
 
-    for (size_t i = 0; i < image.height; i++)
-    {
+    for (size_t i = 0; i < image.height; i++) {
         memcpy(data_array + i*image.width, image.data[i], image.width);
         
     }
@@ -183,18 +179,14 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
 
     char filename[PATH_MAX];
 
-    if (NULL == (FD = opendir (directoryPath))) 
-    {
+    if (NULL == (FD = opendir (directoryPath))) {
         fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
 
         exit(1);
     }
 
-    while ((in_file = readdir(FD))) 
-    {
-        /* On linux/Unix we don't want current and parent directories
-         * On windows machine too, thanks Greg Hewgill
-         */
+    while ((in_file = readdir(FD))) {
+
         if (!strcmp (in_file->d_name, "."))
             continue;
         if (!strcmp (in_file->d_name, ".."))    
@@ -202,8 +194,6 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
         if (in_file->d_reclen < sizeof(".bmp") || !strcmp (in_file->d_name + in_file->d_reclen - 5, ".bmp"))    
             continue;
 
-        /* Open directory entry file for common operation */
-        /* TODO : change permissions to meet your need! */
         sprintf(filename, "%s/%s", directoryPath, in_file->d_name);
         printf("%s/n", filename);
         imagesCollection.size++;
@@ -227,13 +217,12 @@ void persist_bmp_image(char * auxPath, BMPHeader header, BMPImage image){
     //TODO (faus, nacho) se estan creando nuevas shades pero no se pisan
     FILE *fStream = fopen(auxPath, "w+");
     
-    if (fStream == NULL)
-        {
-            fprintf(stderr, "Error : Failed to open entry file %s - %s\n", auxPath, strerror(errno));
-            fclose(fStream);
+    if (fStream == NULL) {
+        fprintf(stderr, "Error : Failed to open entry file %s - %s\n", auxPath, strerror(errno));
+        fclose(fStream);
 
-            exit(1);
-        }
+        exit(1);
+    }
         
 
     if (fStream == NULL) {
