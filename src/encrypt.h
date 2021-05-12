@@ -8,5 +8,6 @@
 
 BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k);
 
+void persist_new_shades(char * dirPath, BMPImagesCollection final_shades, BMPHeader header);
 
 #endif

@@ -11,7 +11,7 @@ BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection i
     //TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
 
     // TODO(tobi): Agregar padding para manejar cualquier valor de k
-    if (k == 0 || k > 256 || (size % k) != 0){
+    if (k == 0  || (size % k) != 0) {
         printf("invalid value for k = %c\n", k);
         exit(1);
     }
@@ -61,4 +61,16 @@ BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection i
         }  
     }
     return initial_shades;
+}
+
+void persist_new_shades(char * dirPath, BMPImagesCollection final_shades, BMPHeader header){
+
+    char auxPath[255];
+    
+    for (size_t i = 0; i < final_shades.size; i++)
+    {
+        sprintf(auxPath, "%s/shade_%ld.bmp", dirPath, i);
+        persist_bmp_image(auxPath, header, final_shades.images[i]);
+    }
+    
 }
