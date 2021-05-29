@@ -22,13 +22,23 @@ int main(int argc, char *argv[]) {
     }
 
     printf("\n\n");
-    BMPImagesCollection final_shades = encrypt(bmp_image_to_array(secretImage), secretImage.size, initial_shades, args.k);   
+    uint8_t * secret = bmp_image_to_array(secretImage);
+    BMPImagesCollection final_shades = encrypt(secret, secretImage.size, initial_shades, args.k);   
     
     for (size_t i = 0; i < final_shades.images[0].height; i++) {
         printf("%4X", final_shades.images[0].data[i][0]);
     }
     
     persist_new_shades("images", final_shades, header);
+
+    free(secret);
+    free(header.data);
+    bmp_image_free(secretImage);
+    for (size_t i = 0; i < initial_shades.size; i++) {
+        bmp_image_free(initial_shades.images[i]);
+    }
+    free(initial_shades.images);
+
 
     //TODO (faus, nacho) hacer los 80 free que nos faltan
 }

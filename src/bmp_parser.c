@@ -212,6 +212,15 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
     return imagesCollection;
 }
 
+void bmp_image_free(BMPImage image) {
+
+    for (size_t i = 0; i < image.height; i++) {
+        free(image.data[i]);
+    }
+    free(image.data);
+
+}
+
 void persist_bmp_image(char * auxPath, BMPHeader header, BMPImage image){
 
     //TODO (faus, nacho) se estan creando nuevas shades pero no se pisan

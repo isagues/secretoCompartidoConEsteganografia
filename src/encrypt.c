@@ -30,11 +30,12 @@ BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection i
             exit(1);
         }
     }
-
-    uint8_t * secretBlock = malloc(k*sizeof(uint8_t));
+    //secret block y xValues se inicializan directamente a pesar de ser variable porque es un uint_8 
+    //y no van a ser demasiados bytes
+    uint8_t secretBlock[k];
     ShadeBlock shadeBlock;
     uint8_t auxT;
-    uint8_t *xValues = malloc(initial_shades.size*sizeof(uint8_t));
+    uint8_t xValues[initial_shades.size];
 
     for (size_t j = 0; j < blockCount; j++) {
         
