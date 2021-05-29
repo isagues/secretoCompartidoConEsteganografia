@@ -80,10 +80,10 @@ galois2_8_t ginv(galois2_8_t a) {
 }
 
 galois2_8_t gdiv(galois2_8_t a, galois2_8_t b) {
-    if(b == GAL_SUM_ID) {
-        printf("Division by 0");
-        exit(1);
-    }
+    // if(b == GAL_SUM_ID) {
+    //     printf("Division by 0");
+    //     exit(1);
+    // }
 	return gmul(a, ginv(b));
 }
 
@@ -178,7 +178,7 @@ void galois_lagrange_interpolation(galois2_8_t x[], galois2_8_t y[], galois2_8_t
         }
 
         // No es necesario pues en G(2^8) un numero es su propio inverso en la suma
-        /* if(n - r % 2 == 0) {
+        /* if(n - r % 2 == 0) {F
         *     coefficient = -coefficient;
         *  }
         */

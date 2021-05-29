@@ -9,7 +9,6 @@ uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x){
 BMPImagesCollection encrypt(uint8_t * secret, size_t size, BMPImagesCollection initial_shades, uint8_t k) {
 
     //TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
-
     // TODO(tobi): Agregar padding para manejar cualquier valor de k
     if (k == 0  || (size % k) != 0) {
         printf("invalid value for k = %c\n", k);
@@ -68,10 +67,56 @@ void persist_new_shades(char * dirPath, BMPImagesCollection final_shades, BMPHea
 
     char auxPath[255];
     
-    for (size_t i = 0; i < final_shades.size; i++)
-    {
+    for (size_t i = 0; i < final_shades.size; i++) {
         sprintf(auxPath, "%s/shade_%ld.bmp", dirPath, i);
         persist_bmp_image(auxPath, header, final_shades.images[i]);
     }
     
+}
+
+uint8_t * decrypt(size_t size, BMPImagesCollection shades, uint8_t k) {
+
+    if (k == 0  || (size % k) != 0) {
+        printf("invalid value for k = %c\n", k);
+        exit(1);
+    }
+    
+    size_t blockCount = size / k;
+    
+    if(shades.size < k || blockCount > shades.images[0].size/4 ){
+        printf("invalid parameters\n");
+        exit(1);
+    }
+    
+    size_t shade_size = shades.images[0].size;
+
+    for (size_t i = 1; i < shades.size; i++) {
+        if (shades.images[i].size != shade_size) {
+            perror("Shades are from different sizes.\n");
+            exit(1);
+        }
+    }
+
+    uint8_t *secret = malloc(size * sizeof(*secret));
+    uint8_t secretBlock[k];
+    ShadeBlock shadeBlock;
+    uint8_t xValues[k];
+    uint8_t yValues[k];
+
+    for (size_t j = 0; j < blockCount; j++) {
+
+        // Indices de esta forma para poder seguir con la convencion del paper
+        for (size_t i = 0; i < k; i++) {
+            shadeBlock = get_shadeblock_from_index(shades.images[i], j); //2 conseguir las SHADES_NUMBER matrices de 2*2
+            
+            xValues[i] = shadeBlock.x;
+            yValues[i] = recover_t_value(shadeBlock);
+        }  
+
+        galois_lagrange_interpolation(xValues, yValues, secretBlock, k);
+
+        memcpy(secret + j*k, secretBlock, k); //1 conseguir k pixeles del offset
+    }
+
+    return secret;
 }

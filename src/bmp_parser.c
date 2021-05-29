@@ -28,10 +28,6 @@ typedef struct BMPInfoHeader {    // bmih
     uint32_t    colorsImportant;
 } __attribute__((packed)) BMPInfoHeader;
 
-static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh);
-
-static void bmp_read_info_header(FILE * fStream, BMPInfoHeader *ih);
-
 static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, uint32_t height);
 
 BMPHeader* bmp_read_header(char *path, BMPHeader* header){
@@ -82,7 +78,6 @@ BMPImage* bmp_read_file(char *path, BMPImage *img){
         exit(1);
     }
         
-
     if (fStream == NULL) {
         perror("Error openning image file");
         exit(1);
@@ -90,10 +85,7 @@ BMPImage* bmp_read_file(char *path, BMPImage *img){
 
     fread(&fileHeader, sizeof(fileHeader), 1, fStream);
     fread(&infoHeader, sizeof(infoHeader), 1, fStream);
-
-    // bmp_read_file_header(fStream, &fileHeader);
-    // bmp_read_info_header(fStream, &infoHeader);
-
+    
     img->size = fileHeader.fileSize - fileHeader.offset;
     img->width = infoHeader.width;
     img->height = infoHeader.height;
@@ -111,29 +103,6 @@ void bmp_swap_rows(BMPImage *img) {
         img->data[low] = img->data[high];
         img->data[high] = temp;
     }
-}
-
-static void bmp_read_file_header(FILE * fStream, BMPFileHeader *fh) {
-    fread(&fh->type,         sizeof(fh->type),        1,  fStream);
-    fread(&fh->fileSize,     sizeof(fh->fileSize),    1,  fStream);
-    fread(&fh->reserved1,    sizeof(fh->reserved1),   1,  fStream);
-    fread(&fh->reserved2,    sizeof(fh->reserved2),   1,  fStream);
-    fread(&fh->offset,       sizeof(fh->offset),      1,  fStream);
-}
-
-static void bmp_read_info_header(FILE * fStream, BMPInfoHeader *ih) {
-    
-    fread(&ih->headerSize,      sizeof(ih->headerSize),     1,  fStream);
-    fread(&ih->width,           sizeof(ih->width),          1,  fStream);
-    fread(&ih->height,          sizeof(ih->height),         1,  fStream);
-    fread(&ih->planes,          sizeof(ih->planes),         1,  fStream);
-    fread(&ih->bitCount,        sizeof(ih->bitCount),       1,  fStream);
-    fread(&ih->compression,     sizeof(ih->compression),    1,  fStream);
-    fread(&ih->imageSize,       sizeof(ih->imageSize),      1,  fStream);
-    fread(&ih->XPelsPerMeter,   sizeof(ih->XPelsPerMeter),  1,  fStream);
-    fread(&ih->YPelsPerMeter,   sizeof(ih->YPelsPerMeter),  1,  fStream);
-    fread(&ih->colorsUsed,      sizeof(ih->colorsUsed),     1,  fStream);
-    fread(&ih->colorsImportant, sizeof(ih->colorsImportant),1,  fStream);
 }
 
 static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, uint32_t height) {
@@ -174,6 +143,7 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
     DIR* FD;
     struct dirent* in_file;
     BMPImagesCollection imagesCollection;
+
     imagesCollection.size = 0;
     imagesCollection.images = NULL;
 
@@ -195,8 +165,8 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
             continue;
 
         sprintf(filename, "%s/%s", directoryPath, in_file->d_name);
-        printf("%s/n", filename);
         imagesCollection.size++;
+        
         if((imagesCollection.images = realloc(imagesCollection.images, sizeof(*imagesCollection.images) * (imagesCollection.size))) == NULL){
             printf("Not enough space for images");
             exit(1);  
@@ -210,6 +180,40 @@ BMPImagesCollection get_images_from_directory(char * directoryPath){
 
     closedir(FD);
     return imagesCollection;
+}
+
+BMPHeader get_sample_header_from_directory(char * directoryPath) {
+    
+    DIR* FD;
+    struct dirent* in_file;
+
+    BMPHeader header; 
+
+    char filename[PATH_MAX];
+
+    if (NULL == (FD = opendir (directoryPath))) {
+        fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
+
+        exit(1);
+    }
+
+    while ((in_file = readdir(FD))) {
+
+        if (!strcmp (in_file->d_name, "."))
+            continue;
+        if (!strcmp (in_file->d_name, ".."))    
+            continue;
+        if (in_file->d_reclen < sizeof(".bmp") || !strcmp (in_file->d_name + in_file->d_reclen - 5, ".bmp"))    
+            continue;
+
+        sprintf(filename, "%s/%s", directoryPath, in_file->d_name);
+        
+        bmp_read_header(filename, &header);
+        closedir(FD);
+        return header;
+    }
+
+    exit(1);
 }
 
 void bmp_image_free(BMPImage image) {

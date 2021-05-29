@@ -10,7 +10,7 @@ export MAIN 	= main
 SOURCES 		:= $(shell find $(CURDIR)/$(SRC) -name '*.c' ! -name *$(MAIN).c -type f)
 
 XFLAGS 			?= -ggdb -fsanitize=address -fno-omit-frame-pointer
-export CFLAGS	:= -Wextra -Wall -pedantic -Wno-unused-parameter -Wno-implicit-fallthrough -Wno-unused-function -I$(CURDIR)/$(SRC) $(XFLAGS)
+export CFLAGS	:= -Wextra -Wall -pedantic -Wno-unused-parameter -Wno-newline-eof -Wno-implicit-fallthrough -Wno-unused-function -I$(CURDIR)/$(SRC) $(XFLAGS)
 
 export LIBRARIES = 
 

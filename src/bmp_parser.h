@@ -32,6 +32,10 @@ void bmp_swap_rows(BMPImage *img);
 
 BMPImagesCollection get_images_from_directory(char * directoryPath);
 
+BMPHeader get_sample_header_from_directory(char * directoryPath);
+
+void bmp_image_free(BMPImage image);
+
 void persist_bmp_image(char * auxPath, BMPHeader header, BMPImage image);
 
 #endif
