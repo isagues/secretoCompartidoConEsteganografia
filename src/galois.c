@@ -144,7 +144,6 @@ void galois_multiplicative_inverses(galois2_8_t ginv[16][16]) {
  */
 static galois2_8_t lagrange_interpolation_coefficient_intermediate_product(galois2_8_t x[], uint8_t n, uint8_t r, uint8_t i) {
     galois2_8_t ret = GAL_MUL_ID;
-
     for(uint8_t q = 0; q < n - r; q++) {
         if(q != i) {
             // ret *= x[q] / (x[i] - x[q]);
@@ -160,19 +159,22 @@ void galois_lagrange_interpolation(galois2_8_t x[], galois2_8_t y[], galois2_8_t
     // r = coefficient_idx
     for(uint8_t r = 0; r < n; r++) {
         galois2_8_t coefficient = 0;
-        galois2_8_t y_prime;
+        //MANnuver
+        galois2_8_t y_prime[n];
+
 
         for(uint8_t i = 0; i < n - r; i++) {
-            if(i > 0) {
-                // y_prime = (y[i] + p[0]) / x[i];
-                y_prime = gdiv(gsub(y[i], p[0]), x[i]);
+            // No seria cuando r es > 0?
+            if(r > 0) {
+                // y_prime = (y[i] - p[0]) / x[i];
+                y_prime[i] = gdiv(gsub(y_prime[i], p[r - 1]), x[i]);
             }
             else {
-                y_prime = y[i];
+                y_prime[i] = y[i];
             }
 
             // coefficient += y_prime * lagrange_interpolation_coefficient_intermediate_product(x, n, r, p);
-            coefficient = gadd(coefficient, gmul(y_prime, lagrange_interpolation_coefficient_intermediate_product(x, n, r, i)));
+            coefficient = gadd(coefficient, gmul(y_prime[i], lagrange_interpolation_coefficient_intermediate_product(x, n, r, i)));
         }
 
         // No es necesario pues en G(2^8) un numero es su propio inverso en la suma
