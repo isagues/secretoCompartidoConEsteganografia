@@ -19,6 +19,8 @@ START_TEST (galois_inverse_test) {
     ck_assert_int_eq(gmul(ginv(0x54), 0x54), GAL_MUL_ID);
     ck_assert_int_eq(gmul(ginv(0x11), 0x11), GAL_MUL_ID);
     ck_assert_int_eq(gmul(ginv(0x91), 0x91), GAL_MUL_ID);
+    ck_assert_int_eq(gmul(ginv(79)  , 79),   GAL_MUL_ID);
+    ck_assert_int_eq(gmul(ginv(125) , 125),  GAL_MUL_ID);
 }
 END_TEST
 
@@ -29,6 +31,7 @@ START_TEST (galois_division_test) {
     ck_assert_int_eq(gdiv(0x11, 0x11), GAL_MUL_ID);
     ck_assert_int_eq(gdiv(0x91, 0x91), GAL_MUL_ID);
     ck_assert_int_eq(gdiv(247, 19), 89);
+    ck_assert_int_eq(gdiv(79, 125), 149);
 }
 END_TEST
 
@@ -69,9 +72,7 @@ END_TEST
 
 START_TEST (galois_lagrange_interpolation_test) {
 
-
     {
-        // Se nos rompe el caso
         galois2_8_t p[]     = {193, 174, 186, 182, 171};
         galois2_8_t x[N(p)] = {194, 193, 11,  50,  79};
         galois2_8_t y[N(p)];
