@@ -74,6 +74,7 @@ uint8_t shadeblock_recover_t_value(ShadeBlock *shadeBlock) {
 
 void shadeblock_guarantee_different_x_values(ShadeBlock *shadeBlock, uint8_t *xValues, size_t limit) {
     bool valueIsPresent = false;
+    int direction = (shadeBlock->x > UINT8_MAX / 2) ? -1 : 1;
     
     for(size_t i = 0; i < limit; i++) {
         
@@ -81,11 +82,13 @@ void shadeblock_guarantee_different_x_values(ShadeBlock *shadeBlock, uint8_t *xV
             valueIsPresent = true;
         }
 
-        // TODO(nacho, faus): Se podria mejorar para que cuando llegue a 255 no salte a 0 y cambie el color abrutamente.
         if(valueIsPresent) {
-            shadeBlock->x = shadeBlock->x + 1 % 255;
             i = 0;
             valueIsPresent = false;
+
+            do {
+                shadeBlock->x += direction;
+            } while(shadeBlock->x == xValues[i]);
         }
     }
 }
