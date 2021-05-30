@@ -75,8 +75,8 @@ void recover(char * secretPath, uint8_t k, char * shadesPath){
     persist_bmp_image(secretPath, secretImageHeader, secretImage);
 
     free(secret);
+    free(secretImage.data);
     free(secretImageHeader.data);
-    bmp_image_free(secretImage);
     for (size_t i = 0; i < shades.size; i++) {
         bmp_image_free(shades.images[i]);
     }
