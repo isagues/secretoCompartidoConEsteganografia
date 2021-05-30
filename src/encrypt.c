@@ -64,14 +64,18 @@ bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t 
     return true;
 }
 
-void shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *header){
+bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *header){
+    bool ret = true;
     char auxPath[PATH_MAX];
     
     // TODO(tobi): mkdir if dir doesn't exists
-    for(size_t i = 0; i < shades->size; i++) {
+    // Capaz borrar los archivos creados si hubo un error? Probablemente no, paja
+    for(size_t i = 0; ret && i < shades->size; i++) {
         sprintf(auxPath, "%s/shade_%ld.bmp", dirPath, i);
-        bmp_persist_image(auxPath, header, &shades->images[i]);
+        ret &= bmp_persist_image(auxPath, header, &shades->images[i]);
     }
+
+    return ret;
 }
 
 uint8_t * decrypt(size_t size, BMPImagesCollection *shades, uint8_t k) {

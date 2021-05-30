@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
     Arguments args = args_parse_and_validate(argc, argv);
     // Arguments args = {.action='d', .k=4, .secretImage="images/Gustavo300.bmp", .shadowsDir="images"}; // PA TESTING
 
-    switch (args.action) {
+    switch(args.action) {
         case DISTRIBUTE:
             return distribute(args.secretImage, args.k, args.shadowsDir, args.shadesOutputDir);
         
@@ -24,19 +24,39 @@ int main(int argc, char *argv[]) {
     }
 }
 
+// TODO(tobi): Manejar logging mejor
 static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir) {
     
     BMPHeader header;
     BMPImage secretImage;
-    bmp_read_file(secretPath, &secretImage, &header);
+    if(!bmp_read_file(secretPath, &secretImage, &header)) {
+        return 2;
+    }
 
     BMPImagesCollection shades;
-    bmp_images_from_directory(shadesPath, &shades, NULL);
+    if(!bmp_images_from_directory(shadesPath, &shades, NULL)) {
+        // Rollback
+        bmp_header_free(&header);
+        bmp_image_free(&secretImage);
+        return 2;
+    }
 
     uint8_t *secret = bmp_image_data(&secretImage);
-    encrypt(secret, secretImage.size, &shades, k);   
     
-    shades_persist(shadesOutputDir, &shades, &header);
+    if(!encrypt(secret, secretImage.size, &shades, k)) {
+        // Rollback
+        bmp_header_free(&header);
+        bmp_image_free(&secretImage);
+        return 2;
+    }
+    
+    if(shades_persist(shadesOutputDir, &shades, &header)) {
+        // Rollback
+        bmp_header_free(&header);
+        bmp_image_free(&secretImage);
+        bmp_image_collection_free(&shades);
+        return 2;
+    }
 
     bmp_header_free(&header);
     bmp_image_free(&secretImage);
@@ -51,26 +71,47 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath){
 
     BMPImagesCollection shades;
     BMPHeader secretImageHeader;
-    bmp_images_from_directory(shadesPath, &shades, &secretImageHeader);
+    if(!bmp_images_from_directory(shadesPath, &shades, &secretImageHeader)) {
+        return 3;
+    }
 
     if(k <= 0 || shades.size < k) {
         fprintf(stderr, "ERROR");
-        exit(1);
+        return 3;
     }
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
 
     uint8_t *secret = decrypt(secretSize, &shades, k);
+    if(secret == NULL) {
+        // Rollback
+        bmp_header_free(&secretImageHeader);
+        bmp_image_collection_free(&shades);
+        return 3;
+    }
 
     memcpy(&secretImage, &shades.images[0], sizeof(secretImage));
     
     secretImage.data = malloc(secretImage.height * sizeof(*secretImage.data));
+    if(secretImage.data == NULL) {
+        // Rollback
+        free(secret);
+        bmp_header_free(&secretImageHeader);
+        bmp_image_collection_free(&shades);
+        return 3;
+    }
     
     for(size_t i = 0; i < secretImage.height; i++) {
         secretImage.data[i] = secret + secretImage.width * i;
     }
 
-    bmp_persist_image(secretPath, &secretImageHeader, &secretImage);
+    if(!bmp_persist_image(secretPath, &secretImageHeader, &secretImage)) {
+        // Rollback
+        bmp_header_free(&secretImageHeader);
+        bmp_image_free(&secretImage);
+        bmp_image_collection_free(&shades);
+        return 3;
+    }
 
     bmp_header_free(&secretImageHeader);
     bmp_image_free(&secretImage);

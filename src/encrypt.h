@@ -8,7 +8,7 @@
 
 bool encrypt(uint8_t * secret, size_t size, BMPImagesCollection *shades, uint8_t k);
 
-void shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *header);
+bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *header);
 
 uint8_t * decrypt(size_t size, BMPImagesCollection *shades, uint8_t k);
 
