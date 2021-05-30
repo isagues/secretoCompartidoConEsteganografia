@@ -47,6 +47,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         // Rollback
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
+        bmp_image_collection_free(&shades);
         return 2;
     }
     
