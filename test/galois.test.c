@@ -1,5 +1,7 @@
 #include <galois.h>
 
+#include "general_utils.h"
+
 #include <check.h>
 #include "test_utils.h"
 
