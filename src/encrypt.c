@@ -1,4 +1,4 @@
-#include <encrypt.h>
+#include "encrypt.h"
 
 #include <string.h>
 
@@ -69,7 +69,7 @@ void persist_new_shades(char * dirPath, BMPImagesCollection final_shades, BMPHea
     
     for (size_t i = 0; i < final_shades.size; i++) {
         sprintf(auxPath, "%s/shade_%ld.bmp", dirPath, i);
-        persist_bmp_image(auxPath, header, final_shades.images[i]);
+        bmp_persist_image(auxPath, &header, &final_shades.images[i]);
     }
     
 }
