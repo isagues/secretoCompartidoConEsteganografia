@@ -231,6 +231,10 @@ void bmp_image_free(BMPImage *image) {
     free(image->data);
 }
 
+void bmp_header_free(BMPHeader *header) {
+    free(header->data);
+}
+
 bool bmp_persist_image(char * auxPath, BMPHeader *header, BMPImage *image) {
 
     //TODO (faus, nacho) se estan creando nuevas shades pero no se pisan

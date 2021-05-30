@@ -81,10 +81,10 @@ galois2_8_t ginv(galois2_8_t a) {
 }
 
 galois2_8_t gdiv(galois2_8_t a, galois2_8_t b) {
-    // if(b == GAL_SUM_ID) {
-    //     printf("Division by 0");
-    //     exit(1);
-    // }
+    if(b == GAL_SUM_ID) {
+        printf("Division by 0");
+        exit(1);
+    }
 	return gmul(a, ginv(b));
 }
 

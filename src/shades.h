@@ -14,14 +14,14 @@ typedef struct ShadeBlock {
 } ShadeBlock;
 
 
-ShadeBlock get_shadeblock_from_index(BMPImage image, size_t index);
+ShadeBlock shadeblock_get(BMPImage *image, size_t index);
 
-void set_shadeblock_from_index(BMPImage image, size_t index, ShadeBlock newShadeBlock);
+void shadeblock_set(BMPImage *image, size_t index, ShadeBlock *shadeBlock);
 
-ShadeBlock distribute_t_value(ShadeBlock shadeBlock, uint8_t auxT);
+void shadeblock_distribute_t_value(ShadeBlock *shadeBlock, uint8_t tValue);
 
-uint8_t recover_t_value(ShadeBlock shadeBlock);
+uint8_t shadeblock_recover_t_value(ShadeBlock *shadeBlock);
 
-ShadeBlock guarantee_different_x_values(ShadeBlock shadeBlock, uint8_t * xValues, size_t limit);
+void shadeblock_guarantee_different_x_values(ShadeBlock *shadeBlock, uint8_t * xValues, size_t limit);
 
 #endif

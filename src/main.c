@@ -4,7 +4,7 @@
 
 #include <string.h>
 
-static int distribute(char * secretPath, uint8_t k, char * shadesPath);
+static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir);
 static int recover(char * secretPath, uint8_t k, char * shadesPath);
 
 int main(int argc, char *argv[]) {
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 
     switch (args.action) {
         case DISTRIBUTE:
-            return distribute(args.secretImage, args.k, args.shadowsDir);
+            return distribute(args.secretImage, args.k, args.shadowsDir, args.shadesOutputDir);
         
         case RECOVER:
             return recover(args.secretImage, args.k, args.shadowsDir);
@@ -24,28 +24,28 @@ int main(int argc, char *argv[]) {
     }
 }
 
-static int distribute(char * secretPath, uint8_t k, char * shadesPath) {
+static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir) {
     
     BMPHeader header;
     BMPImage secretImage;
     bmp_read_file(secretPath, &secretImage, &header);
 
-    BMPImagesCollection initial_shades;
-    bmp_images_from_directory(shadesPath, &initial_shades, NULL);
+    BMPImagesCollection shades;
+    bmp_images_from_directory(shadesPath, &shades, NULL);
 
-    uint8_t * secret = bmp_image_data(&secretImage);
-    BMPImagesCollection final_shades = encrypt(secret, secretImage.size, initial_shades, k);   
+    uint8_t *secret = bmp_image_data(&secretImage);
+    encrypt(secret, secretImage.size, &shades, k);   
     
-    persist_new_shades("images", final_shades, header);
+    shades_persist(shadesOutputDir, &shades, &header);
 
-    free(header.data);
+    bmp_header_free(&header);
     bmp_image_free(&secretImage);
-    bmp_image_collection_free(&initial_shades);
+    bmp_image_collection_free(&shades);
 
     return 0;
 }
 
-static int recover(char * secretPath, uint8_t k, char * shadesPath){
+static int recover(char *secretPath, uint8_t k, char *shadesPath){
 
     BMPImage secretImage;
 
@@ -60,7 +60,7 @@ static int recover(char * secretPath, uint8_t k, char * shadesPath){
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
 
-    uint8_t *secret = decrypt(secretSize, shades, k);
+    uint8_t *secret = decrypt(secretSize, &shades, k);
 
     memcpy(&secretImage, &shades.images[0], sizeof(secretImage));
     
@@ -72,9 +72,8 @@ static int recover(char * secretPath, uint8_t k, char * shadesPath){
 
     bmp_persist_image(secretPath, &secretImageHeader, &secretImage);
 
-    free(secret);
-    free(secretImage.data);
-    free(secretImageHeader.data);
+    bmp_header_free(&secretImageHeader);
+    bmp_image_free(&secretImage);
     bmp_image_collection_free(&shades);
 
     return 0;

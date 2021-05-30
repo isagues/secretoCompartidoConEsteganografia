@@ -34,9 +34,11 @@ void bmp_swap_rows(BMPImage *img);
 
 bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *imagesCollection, BMPHeader *sampleHeader);
 
+void bmp_image_collection_free(BMPImagesCollection *collection);
+
 void bmp_image_free(BMPImage *image);
 
-void bmp_image_collection_free(BMPImagesCollection *collection);
+void bmp_header_free(BMPHeader *header);
 
 bool bmp_persist_image(char * auxPath, BMPHeader *header, BMPImage *image);
 
