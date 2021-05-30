@@ -1,8 +1,9 @@
-#include <galois.h>
+#include "galois.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 galois2_8_gen_t galois_generators[GAL_GENERATOR_COUNT] = {
     0x003, 0x007, 0x00B, 0x00D, 0x013, 0x019, 0x025, 0x029, 0x02F,
@@ -155,25 +156,52 @@ static galois2_8_t lagrange_interpolation_coefficient_intermediate_product(galoi
 }
 
 void galois_lagrange_interpolation(galois2_8_t x[], galois2_8_t y[], galois2_8_t p[], uint8_t n) {
+    galois2_8_t y_prime[n];
+    galois2_8_t firstCoeff = GAL_SUM_ID;
+
+    bool xContainsNull = false;
+    uint8_t xNullIdx;
+
+    // First Coefficient
+    for(uint8_t i = 0; i < n; i++) {
+        if(x[i] == GAL_SUM_ID) {
+            xContainsNull = true;
+            xNullIdx = i;
+        }
+
+        y_prime[i] = y[i];
+
+        if(!xContainsNull) {
+            // firstCoeff += y_prime[i] * lagrange_interpolation_coefficient_intermediate_product(x, n, r, p);
+            firstCoeff = gadd(firstCoeff, gmul(y_prime[i], lagrange_interpolation_coefficient_intermediate_product(x, n, 0, i)));
+        }
+    }
+    // Independent term equals y if x = 0
+    p[0] = xContainsNull ? y[xNullIdx] : firstCoeff;
+
+    if(xContainsNull) {
+        // Send null to end position
+        x[xNullIdx] = x[n - 1];
+        x[n - 1] = GAL_SUM_ID;
+
+        galois2_8_t aux = y[xNullIdx];
+        y[xNullIdx] = y[n - 1];
+        y[n - 1] = aux;
+
+        aux = y_prime[xNullIdx];
+        y_prime[xNullIdx] = y_prime[n - 1];
+        y_prime[n - 1] = aux;
+    }
 
     // r = coefficient_idx
-    for(uint8_t r = 0; r < n; r++) {
-        galois2_8_t coefficient = 0;
-        //MANnuver
-        galois2_8_t y_prime[n];
-
+    for(uint8_t r = 1; r < n; r++) {
+        galois2_8_t coefficient = GAL_SUM_ID;
 
         for(uint8_t i = 0; i < n - r; i++) {
-            // No seria cuando r es > 0?
-            if(r > 0) {
-                // y_prime = (y[i] - p[0]) / x[i];
-                y_prime[i] = gdiv(gsub(y_prime[i], p[r - 1]), x[i]);
-            }
-            else {
-                y_prime[i] = y[i];
-            }
+            // y_prime[i] = (y[i] - p[0]) / x[i];
+            y_prime[i] = gdiv(gsub(y_prime[i], p[r - 1]), x[i]);
 
-            // coefficient += y_prime * lagrange_interpolation_coefficient_intermediate_product(x, n, r, p);
+            // coefficient += y_prime[i] * lagrange_interpolation_coefficient_intermediate_product(x, n, r, p);
             coefficient = gadd(coefficient, gmul(y_prime[i], lagrange_interpolation_coefficient_intermediate_product(x, n, r, i)));
         }
 

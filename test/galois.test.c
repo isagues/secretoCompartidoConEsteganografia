@@ -50,30 +50,74 @@ START_TEST (galois_poly_eval_test) {
 END_TEST
 
 START_TEST (galois_lagrange_interpolation_test) {
-    // They must be unique
-    // galois2_8_t p[] = {0x13, 0x75, 0xFA, 0x15, 0x89, 0x72};
-    // galois2_8_t x[N(p)] = {0x95, 0x43, 0x93, 0xF8, 0xD2, 0x11};
-    galois2_8_t p[] = {0x13, 0x75, 0xFA, 0x15, 0x89};
-    galois2_8_t x[N(p)] = {0x95, 0x43, 0x93, 0xF8, 0xD2};
-    galois2_8_t y[N(p)];
 
-    // Inicializo y
-    for(uint8_t i = 0; i < N(p); i++) {
-        y[i] = galois_poly_eval(p, N(p), x[i]);
+    {
+        // Base test
+        galois2_8_t p[] = {0x13, 0x75, 0xFA, 0x15, 0x89};
+        galois2_8_t x[N(p)] = {0x95, 0x43, 0x93, 0xF8, 0xD2};
+        galois2_8_t y[N(p)];
+
+        // Inicializo y
+        for(uint8_t i = 0; i < N(p); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        galois2_8_t p_ret[N(p)];
+        galois_lagrange_interpolation(x, y, p_ret, N(p));
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(p[i], p_ret[i]);
+        }
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
+        }
     }
 
-    galois2_8_t p_ret[N(p)];
-    galois_lagrange_interpolation(x, y, p_ret, N(p));
+    {
+        // test with null x last
+        galois2_8_t p[] = {0x13, 0x75, 0xFA, 0x15, 0x89};
+        galois2_8_t x[N(p)] = {0x95, 0x43, 0x93, 0xF8, 0x00};
+        galois2_8_t y[N(p)];
 
-    print_uint8_array(p, N(p));
-    print_uint8_array(p_ret, N(p_ret));
+        // Inicializo y
+        for(uint8_t i = 0; i < N(p); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
 
-    for(size_t i = 0; i < N(p); i++) {
-        ck_assert_int_eq(p[i], p_ret[i]);
+        galois2_8_t p_ret[N(p)];
+        galois_lagrange_interpolation(x, y, p_ret, N(p));
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(p[i], p_ret[i]);
+        }
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
+        }
     }
 
-    for(size_t i = 0; i < N(p); i++) {
-        ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
+    {
+        // test with null x in the middle
+        galois2_8_t p[] = {0x13, 0x75, 0xFA, 0x15, 0x89};
+        galois2_8_t x[N(p)] = {0x95, 0x43, 0x00, 0xF8, 0xD2};
+        galois2_8_t y[N(p)];
+
+        // Inicializo y
+        for(uint8_t i = 0; i < N(p); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        galois2_8_t p_ret[N(p)];
+        galois_lagrange_interpolation(x, y, p_ret, N(p));
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(p[i], p_ret[i]);
+        }
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
+        }
     }
 }
 END_TEST
