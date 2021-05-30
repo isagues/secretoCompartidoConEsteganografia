@@ -3,8 +3,6 @@
 #include "general_utils.h"
 
 #include <check.h>
-#include "test_utils.h"
-
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -35,23 +33,65 @@ START_TEST (galois_division_test) {
 END_TEST
 
 START_TEST (galois_poly_eval_test) {
-    galois2_8_t p[]              = {0x13, 0x75};
-    galois2_8_t x[N(p)]          = {0x95, 0x43};
-    galois2_8_t expected_y[N(p)] = {27, 228};
-    galois2_8_t y[N(p)];
+    {
+        galois2_8_t p[]              = {0x13, 0x75};
+        galois2_8_t x[N(p)]          = {0x95, 0x43};
+        galois2_8_t expected_y[N(p)] = {27, 228};
+        galois2_8_t y[N(p)];
 
-    // Inicializo y
-    for(uint8_t i = 0; i < N(y); i++) {
-        y[i] = galois_poly_eval(p, N(p), x[i]);
+        // Inicializo y
+        for(uint8_t i = 0; i < N(y); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        for(size_t i = 0; i < N(y); i++) {
+            ck_assert_int_eq(expected_y[i], y[i]);
+        }
     }
 
-    for(size_t i = 0; i < N(y); i++) {
-        ck_assert_int_eq(expected_y[i], y[i]);
+    {
+        galois2_8_t p[]              = {193, 174, 186, 182, 171};
+        galois2_8_t x[N(p)]          = {194, 193, 11, 50, 79};
+        galois2_8_t expected_y[N(p)] = {166, 80, 140, 41, 83};
+        galois2_8_t y[N(p)];
+
+        // Inicializo y
+        for(uint8_t i = 0; i < N(y); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        for(size_t i = 0; i < N(y); i++) {
+            ck_assert_int_eq(expected_y[i], y[i]);
+        }
     }
 }
 END_TEST
 
 START_TEST (galois_lagrange_interpolation_test) {
+
+
+    {
+        // Se nos rompe el caso
+        galois2_8_t p[]     = {193, 174, 186, 182, 171};
+        galois2_8_t x[N(p)] = {194, 193, 11,  50,  79};
+        galois2_8_t y[N(p)];
+
+        // Inicializo y
+        for(uint8_t i = 0; i < N(p); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        galois2_8_t p_ret[N(p)];
+        galois_lagrange_interpolation(x, y, p_ret, N(p));
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(p[i], p_ret[i]);
+        }
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
+        }
+    }
 
     {
         // Base test
