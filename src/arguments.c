@@ -6,14 +6,14 @@
 
 #define ARG_COUNT  5 // 1 + 4
 #define HELP_STRING \
-        "ss d|r secret_image_relative_path k_value shadows_dir_path [shades_output_dir] [-v|-d]\n\n \
-        - shades_output_dir only available on distribute mode.\n \
+        "ss d|r secret_image_relative_path k_value shadows_dir_path [shades_output_dir] [-p] [-v|-d]\n\n \
+        `shades_output_dir' only available on distribute mode.\n \
+        -p: use padding if `k' is not a multiple the secret size instead of failing\n \
         -v: verbose. Logs about program status.\n \
         -d: debug. Detailed error logs.\n"
 
 Arguments args_parse_and_validate(int argc, char *argv[]) {
     unsigned argCount = (unsigned) argc;
-
 
     if(strcmp(argv[1], "help") == 0) {
         printf(HELP_STRING);
@@ -29,6 +29,7 @@ Arguments args_parse_and_validate(int argc, char *argv[]) {
     Arguments args;
     args.loggingLevel = INFO;
     args.shadesOutputDir = NULL;
+    args.padding = false;
 
     args.action = argv[1][0];
 
@@ -54,6 +55,9 @@ Arguments args_parse_and_validate(int argc, char *argv[]) {
     for(size_t i = 5; i < argCount; i++) {
         if(argv[i][0] != '-' && args.shadesOutputDir == NULL && args.action == DISTRIBUTE) {
             args.shadesOutputDir = argv[i];
+        }
+        else if(strcmp(argv[i], "-p") == 0) {
+            args.padding = true;
         }
         else if(args.loggingLevel == INFO) {
             if(strcmp(argv[i], "-v") == 0) {

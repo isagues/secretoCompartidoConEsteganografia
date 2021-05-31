@@ -18,6 +18,7 @@ typedef struct Arguments {
     char *          secretImage;
     char *          shadowsDir;
     char *          shadesOutputDir;
+    bool            padding;
     LoggingLevel    loggingLevel;
 } Arguments;
 

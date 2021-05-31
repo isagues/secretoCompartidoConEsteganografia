@@ -4,8 +4,8 @@
 
 #include <string.h>
 
-static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir);
-static int recover(char * secretPath, uint8_t k, char * shadesPath);
+static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir, bool padding);
+static int recover(char * secretPath, uint8_t k, char * shadesPath, bool padding);
 
 int main(int argc, char *argv[]) {
 
@@ -14,10 +14,10 @@ int main(int argc, char *argv[]) {
 
     switch(args.action) {
         case DISTRIBUTE:
-            return distribute(args.secretImage, args.k, args.shadowsDir, args.shadesOutputDir);
+            return distribute(args.secretImage, args.k, args.shadowsDir, args.shadesOutputDir, args.padding);
         
         case RECOVER:
-            return recover(args.secretImage, args.k, args.shadowsDir);
+            return recover(args.secretImage, args.k, args.shadowsDir, args.padding);
 
         default:
             return 1;
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 }
 
 // TODO(tobi): Manejar logging mejor
-static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir) {
+static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir, bool padding) {
     
     BMPHeader header;
     BMPImage secretImage;
@@ -43,7 +43,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
 
     uint8_t *secret = bmp_image_data(&secretImage);
     
-    if(!encrypt(secret, secretImage.size, &shades, k)) {
+    if(!encrypt(secret, secretImage.size, &shades, k, padding)) {
         // Rollback
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
@@ -66,7 +66,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
     return 0;
 }
 
-static int recover(char *secretPath, uint8_t k, char *shadesPath){
+static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
 
     BMPImage secretImage;
 
@@ -83,7 +83,7 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath){
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
 
-    uint8_t *secret = decrypt(secretSize, &shades, k);
+    uint8_t *secret = decrypt(secretSize, &shades, k, padding);
     if(secret == NULL) {
         // Rollback
         bmp_header_free(&secretImageHeader);

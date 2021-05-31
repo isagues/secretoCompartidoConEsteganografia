@@ -2,20 +2,26 @@
 
 #include <string.h>
 
-static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k);
+static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k, bool padding);
 
 uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x) {
     return galois_poly_eval(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
 }
 
-static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k) {
+static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k, bool padding) {
     
     if(k < 1) {
         fprintf(stderr, "k must be at least 2\n");
         return false;
     }
     
-    size_t blockCount = secretSize / k + !!(secretSize % k);
+    size_t remainder = secretSize % k;
+    size_t blockCount = secretSize / k + !!remainder;
+
+    if(remainder && !padding) {
+        fprintf(stderr, "secret must be a divisible by k or padding must be enabled\n");
+        return false;
+    } 
     
     if(shades->size < k) {
         fprintf(stderr, "Not enough shades to process secret were provided. %d shades are needed.", k);
@@ -39,12 +45,12 @@ static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8
     return true;
 }
 
-bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t k) {
+bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t k, bool padding) {
 
     // TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
     // TODO(tobi): Agregar padding para manejar cualquier valor de k
     // TODO(tobi): Ponerle tope a k, para que no haya stack overflow
-    if(!validate_input(size, shades, k)) {
+    if(!validate_input(size, shades, k, padding)) {
         return false;
     }
     
@@ -69,10 +75,6 @@ bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t 
             // Agrego padding
             memcpy(secretBlock, secret + j*k, remainder);
             memset(secret + j*k + remainder, 0, k - remainder); 
-        }
-
-        if(j == 5358) {
-            printf("hola");
         }
         
         // Indices de esta forma para poder seguir con la convencion del paper
@@ -109,8 +111,8 @@ bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *head
     return ret;
 }
 
-uint8_t * decrypt(size_t size, BMPImagesCollection *shades, uint8_t k) {
-    if(!validate_input(size, shades, k)) {
+uint8_t * decrypt(size_t size, BMPImagesCollection *shades, uint8_t k, bool padding) {
+    if(!validate_input(size, shades, k, padding)) {
         return NULL;
     }
 
