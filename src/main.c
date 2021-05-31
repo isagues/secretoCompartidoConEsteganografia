@@ -11,7 +11,12 @@ static int recover(char * secretPath, uint8_t k, char * shadesPath, bool padding
 
 int main(int argc, char *argv[]) {
 
-    Arguments args = args_parse_and_validate(argc, argv);
+    Args args;
+    
+    if(!args_parse(argc, argv, &args)) {
+        LOG_FATAL("Failed to parse args correctly.");
+        return EXIT_FAILURE;
+    }
     // Arguments args = {.action='d', .k=4, .secretImage="images/Gustavo300.bmp", .shadowsDir="images"}; // PA TESTING
 
     switch(args.action) {
@@ -100,6 +105,8 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
     
     secretImage.data = malloc(secretImage.height * sizeof(*secretImage.data));
     if(secretImage.data == NULL) {
+        LOG_FATAL("Failed to allocate memory for secret data");
+
         // Rollback
         free(secret);
         bmp_header_free(&secretImageHeader);
@@ -112,6 +119,8 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
     }
 
     if(!bmp_persist_image(secretPath, &secretImageHeader, &secretImage)) {
+        LOG_FATAL("Failed to persist image: %s", secretPath);
+        
         // Rollback
         bmp_header_free(&secretImageHeader);
         bmp_image_free(&secretImage);

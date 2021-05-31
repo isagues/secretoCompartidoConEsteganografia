@@ -1,88 +1,152 @@
 #include "args/args.h"
+#include "log/log.h"
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h>     /* for printf */
+#include <stdlib.h>    /* for exit */
+#include <limits.h>    /* LONG_MIN et al */
+#include <string.h>    /* memset */
+#include <errno.h>
+#include <getopt.h>
 
-#define ARG_COUNT  5 // 1 + 4
-#define HELP_STRING \
-        "ss d|r secret_image_relative_path k_value shadows_dir_path [shades_output_dir] [-p] [-v|-d]\n\n \
-        `shades_output_dir' only available on distribute mode.\n \
-        -p: use padding if `k' is not a multiple the secret size instead of failing\n \
-        -v: verbose. Logs about program status.\n \
-        -d: debug. Detailed error logs.\n"
+#define MIN_ARG_COUNT  5 // 1 + 4
 
-Arguments args_parse_and_validate(int argc, char *argv[]) {
-    unsigned argCount = (unsigned) argc;
+static void version(void);
+static void usage(const char *progname);
+static int get_non_option_args(const int argc, char **argv, Args *args);
 
-    if(strcmp(argv[1], "help") == 0) {
-        printf(HELP_STRING);
-        exit(0);
+
+bool args_parse(const int argc, char **argv, Args *args) {
+    
+    if(args == NULL) {
+        LOG_FATAL("Recieved args NULL.");
+        return false;
     }
 
-    if (argc < ARG_COUNT) {
-        fprintf(stderr, "Argument count missmatch. Make sure to call the program like:\n");
-        fprintf(stderr, HELP_STRING);
-        exit(1);
+    memset(args, 0, sizeof(*args)); // sobre todo para setear en null los punteros de users
+
+    // Default values
+    args->shadesOutputDir   = NULL;
+    args->padding           = false;
+
+    args->loglevel          = LOG_LEVEL_FATAL;
+    args->logQuiet          = false;
+    args->logVerbose        = false;
+
+    int c;
+    
+    while (true) {
+
+        int option_index = 0;
+        static struct option long_options[] = {
+            { "version",   no_argument,         0, 0xD001 },
+            { 0,           0,                   0, 0 }
+        };
+
+        c = getopt_long(argc, argv, "-ho:pvd", long_options, &option_index);
+        
+        if (c == -1)
+            break;
+
+        switch (c) {
+            case 'h':
+                usage(argv[0]);
+                exit(EXIT_SUCCESS);
+            case 'o':
+                args->shadesOutputDir = optarg;
+                break;
+            case 'p':
+                args->padding = true;
+                break;
+            case 'v':
+                if(args->loglevel > LOG_LEVEL_INFO) {
+                    args->loglevel = LOG_LEVEL_INFO;
+                }
+                break;
+            case 'd':
+                if(args->loglevel > LOG_LEVEL_DEBUG) {
+                    args->loglevel = LOG_LEVEL_DEBUG;
+                }
+                args->logVerbose = true;
+                break;
+            case 0xD001:
+                version();
+                exit(EXIT_SUCCESS);
+            case 1:
+                // non-option
+                break;
+            
+            default:
+                LOG_FATAL("Unknown argument %d.\n", c);
+                return false;
+        }
     }
 
-    Arguments args;
-    args.loggingLevel = INFO;
-    args.shadesOutputDir = NULL;
-    args.padding = false;
+    get_non_option_args(argc, argv, args);
 
-    args.action = argv[1][0];
-
-    if (args.action != DISTRIBUTE && args.action != RECOVER) {
-        fprintf(stderr, "Invalid first param. Available options are [%c] for distributing the secret and [%c] to recover it.", DISTRIBUTE, RECOVER);
-        exit(1);
+    if(args->shadesOutputDir == NULL) {
+        args->shadesOutputDir = args->shadowsDir;
     }
 
-    args.secretImage = argv[2];
+    log_set_level(args->loglevel);
+    log_set_quiet(args->logQuiet);
+    log_set_verbose(args->logVerbose);
+
+    return true;
+}
+
+static int get_non_option_args(const int argc, char **argv, Args *args) {
+
+    if (argc < MIN_ARG_COUNT) {
+        usage(argv[0]);
+        return -1;
+    }
+
+    args->action = argv[1][0];
+
+    if (args->action != DISTRIBUTE && args->action != RECOVER) {
+        LOG_FATAL("Invalid first param. Available options are [%c] for distributing the secret and [%c] to recover it.", DISTRIBUTE, RECOVER);
+        return -1;
+    }
+
+    args->secretImage = argv[2];
     
     int tmpK = atoi(argv[3]);
 
     if(tmpK > UINT8_MAX) {
-        fprintf(stderr, "Invalid third param. K value should be lower or equal than %d.", UINT8_MAX);
-        exit(1);
+        LOG_FATAL("Invalid third param. K value should be lower or equal than %d.", UINT8_MAX);
+        return -1;
     }
 
-    args.k = tmpK;
+    args->k = tmpK;
 
-    args.shadowsDir = argv[4];
+    args->shadowsDir = argv[4];
 
-    // Extra params
-    for(size_t i = 5; i < argCount; i++) {
-        if(argv[i][0] != '-' && args.shadesOutputDir == NULL && args.action == DISTRIBUTE) {
-            args.shadesOutputDir = argv[i];
-        }
-        else if(strcmp(argv[i], "-p") == 0) {
-            args.padding = true;
-        }
-        else if(args.loggingLevel == INFO) {
-            if(strcmp(argv[i], "-v") == 0) {
-                if(args.loggingLevel == INFO) {
-                    args.loggingLevel = VERBOSE;
-                }
-            }
-            else if(strcmp(argv[i], "-d") == 0) {
-                if(args.loggingLevel == INFO) {
-                    args.loggingLevel = DEBUG;
-                }
-            }
-            else {
-                fprintf(stderr, "Invalid extra param %s. It will be ignored.\n", argv[i]);
-            }
-        }
-        else {
-            fprintf(stderr, "Invalid extra param %s. It will be ignored.\n", argv[i]);
-        }
-    }
+    return MIN_ARG_COUNT - 1;
+}
 
-    if(args.shadesOutputDir == NULL) {
-        // Default
-        args.shadesOutputDir = "images";
-    }
+static void version(void) {
+    LOG_INFO(
+        "\n"
+        "   Shared secret utility\n"
+        "   ITBA Criptografia y Seguridad 2021/1 -- Grupo 18\n"
+        "   Alumnos:\n"
+        "       - Brandy, Tobias\n"
+        "       - Pannunzio, Faustino\n"
+        "       - Sagues, Ignacio\n");
+}
 
-    return args;
+static void usage(const char *progname) {
+    LOG_INFO(
+        "\n"
+        "Usage: %s d|r secret_image_relative_path k_value shadows_dir_path [OPTION]...\n"
+        "\n"
+        "   -h                          Show usage.\n"
+        "   -o <shades output dir>      Only available on distribute mode.\n"
+        "   -p                          Enable secret padding. Use padding if the secret is not a divisible by `k' instead of failing\n"
+        "   -v                          Verbose. Logs about program status.\n"
+        "   -d                          Debug. Detailed error logs.\n"
+        "\n"
+        "   --version                   Show version and info.\n"
+        "\n",
+        progname);
 }

@@ -1,25 +1,33 @@
-#include <stdint.h>
+#ifndef __ARGS_H__
+#define __ARGS_H__
+
+#include "log/log.h"
+
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum Action {
     DISTRIBUTE  = 'd',
     RECOVER     = 'r',
 } Action;
 
-typedef enum LoggingLevel {
-    INFO,
-    VERBOSE,
-    DEBUG,
-} LoggingLevel;
-
-typedef struct Arguments {
+typedef struct Args {
     Action          action;
     uint8_t         k;
     char *          secretImage;
     char *          shadowsDir;
     char *          shadesOutputDir;
     bool            padding;
-    LoggingLevel    loggingLevel;
-} Arguments;
+    enum LogLevel   loglevel;
+    bool            logQuiet;
+    bool            logVerbose;
+} Args;
 
-Arguments args_parse_and_validate(int argc, char *argv[]);
+/**
+ * Interpreta la linea de comandos (argc, argv) llenando
+ * args con defaults o la seleccion humana. Puede cortar
+ * la ejecución.
+ */
+bool args_parse(const int argc, char **argv, Args *args);
+
+#endif
