@@ -1,4 +1,5 @@
 #include "shared_secret/shades.h"
+#include "log/log.h"
 
 //source: https://stackoverflow.com/questions/29379006/calculate-parity-bit-from-string-in-c/29381551#29381551
 #define PARITY_BIT(t) ((0x6996u >> ((t ^ (t >> 4)) & 0xf)) & 1)
@@ -65,7 +66,7 @@ uint8_t shadeblock_recover_t_value(ShadeBlock *shadeBlock) {
     y |= (shadeBlock->u & 0x03);             // y = w6w7w8v6v7v8u7u8
     
     if(PARITY_BIT(y) != (shadeBlock->u & 0x04) >> 2) {
-        fprintf(stderr, "Parity bit doesn't match");
+        LOG_ERROR("Parity bit doesn't match");
         return 0; // Si no coincide, lo ignoramos
     }
     

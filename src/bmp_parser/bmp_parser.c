@@ -1,4 +1,5 @@
 #include "bmp_parser/bmp_parser.h"
+#include "log/log.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -37,7 +38,7 @@ bool bmp_read_file(char *path, BMPImage *img, BMPHeader *header) {
 
     FILE *fStream = fopen(path, "r");
     if(fStream == NULL) {
-        fprintf(stderr, "Error : Failed to open entry file %s - %s\n", path, strerror(errno));
+        LOG_FATAL("Failed to open entry file %s - %s", path, strerror(errno));
         return false;
     }
 
@@ -46,10 +47,10 @@ bool bmp_read_file(char *path, BMPImage *img, BMPHeader *header) {
         fread(&infoHeader, sizeof(infoHeader), 1, fStream) < 1
     ) {
         if(feof(fStream)) {
-            fprintf(stderr, "Error : Reached EOF while trying to read header from %s\n", path);
+            LOG_FATAL("Reached EOF while trying to read header from %s", path);
         } 
         else {
-            fprintf(stderr, "Error : Failed to read header from file %s - %s\n", path, strerror(errno));
+            LOG_FATAL("Failed to read header from file %s - %s", path, strerror(errno));
         }
 
         // Rollback
@@ -73,10 +74,10 @@ bool bmp_read_file(char *path, BMPImage *img, BMPHeader *header) {
 
         if(fread(dataPtr, headerSurplus, 1, fStream) < 1) {
             if(feof(fStream)) {
-                fprintf(stderr, "Error : Reached EOF while trying to read header from %s\n", path);
+                LOG_FATAL("Failed to read header from file %s - %s", path, strerror(errno));
             } 
             else {
-                fprintf(stderr, "Error : Failed to read header from file %s - %s\n", path, strerror(errno));
+                LOG_FATAL("Failed to read header from file %s - %s", path, strerror(errno));
             }
 
             // Rollback
@@ -91,6 +92,7 @@ bool bmp_read_file(char *path, BMPImage *img, BMPHeader *header) {
     img->height = infoHeader.height;
     img->data = bmp_read_data(fStream, fileHeader.offset, img->width, img->height);
     if(img->data == NULL) {
+        LOG_FATAL("Failed to read header from file %s - %s", path, strerror(errno));
         //Rollback
         free(header->data);
         fclose(fStream);
@@ -113,19 +115,21 @@ void bmp_swap_rows(BMPImage *img) {
 static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, uint32_t height) {
     // Pongo el puntero del archivo en el lugar correcto
     if(fseek(fStream, offset, SEEK_SET)) {
-        fprintf(stderr, "Error : Failed to read image - %s\n", strerror(errno));
+        LOG_FATAL("Failed to read image - %s\n", strerror(errno));
         return NULL;
     }
 
     // Dynamically allocate multidimensional array: http://c-faq.com/aryptr/dynmuldimary.html
     uint8_t **data = malloc(height * sizeof(*data));
     if(data == NULL) {
+        LOG_FATAL("Failed to allocate memory for data - %s", strerror(errno));
         return NULL;
     }
     
     // Aloco toda la memoria contigua con un esquema de doble indireccion
     data[0] = malloc(height * width * sizeof(sizeof(*data[0])));
     if(data[0] == NULL) {
+        LOG_FATAL("Failed to allocate memory for data - %s", strerror(errno));
         free(data);
         return NULL;
     }
@@ -134,10 +138,10 @@ static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, 
     if(fread(data[0], height * width * sizeof(*data[0]), 1, fStream) < 1) {
         if(feof(fStream)) {
             // TODO(tobi): Analizar caso
-            fprintf(stderr, "Error : Reached EOF while trying to read image\n");
+            LOG_FATAL("Reached EOF while trying to read image");
         } 
         else {
-            fprintf(stderr, "Error : Failed to read image - %s\n", strerror(errno));
+            LOG_FATAL("Failed to read image - %s", strerror(errno));
         }
 
         free(data[0]);
@@ -172,7 +176,7 @@ bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *images
     BMPHeader *tmpHeader = sampleHeader;
 
     if(NULL == (FD = opendir (directoryPath))) {
-        fprintf(stderr, "Error : Failed to open input directory - %s\n", strerror(errno));
+        LOG_FATAL("Failed to open input directory - %s\n", strerror(errno));
         return false;
     }
 
@@ -189,7 +193,7 @@ bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *images
         imagesCollection->size++;
         
         if((tmpImagePtr = realloc(imagesCollection->images, sizeof(*imagesCollection->images) * (imagesCollection->size))) == NULL){
-            printf("Not enough space for images");
+            LOG_FATAL("Failed to allocate memory for image container");
 
             // Rollback
             imagesCollection->size--;
@@ -200,7 +204,7 @@ bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *images
         imagesCollection->images = tmpImagePtr;
         
         if(!bmp_read_file(filename, &imagesCollection->images[imagesCollection->size - 1], tmpHeader)) {
-            printf("Error openning %s", in_file->d_name);
+            LOG_FATAL("Error openning file %s", filename);
 
             // Rollback
             free(&imagesCollection->images[imagesCollection->size - 1]);
@@ -240,7 +244,8 @@ bool bmp_persist_image(char * auxPath, BMPHeader *header, BMPImage *image) {
     //TODO (faus, nacho) se estan creando nuevas shades pero no se pisan
     FILE *fStream = fopen(auxPath, "w+");
     if(fStream == NULL) {
-        fprintf(stderr, "Error : Failed to open entry file %s - %s\n", auxPath, strerror(errno));
+        LOG_FATAL("Failed to open entry file %s - %s\n", auxPath, strerror(errno));
+
         return false;
     }
 
@@ -248,7 +253,7 @@ bool bmp_persist_image(char * auxPath, BMPHeader *header, BMPImage *image) {
         fwrite(header->data,    header->size,                   1, fStream) < 1 ||
         fwrite(image->data[0],  image->height * image->width,   1, fStream) < 1
     ) {
-        fprintf(stderr, "Error : Failed to persist image to file %s - %s\n", auxPath, strerror(errno));
+        LOG_FATAL("Failed to persist image to file %s - %s\n", auxPath, strerror(errno));
         fclose(fStream);
         return false;
     }

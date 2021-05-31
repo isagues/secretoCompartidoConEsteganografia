@@ -1,8 +1,10 @@
 
 all: $(TARGET)
 
+DEPENDENCIES := $(OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+
 #Pull in dependency info for *existing* .o files
--include $(OBJECTS:.$(OBJEXT)=.$(DEPEXT))
+-include $(DEPENDENCIES)
 
 #Link
 $(TARGET): $(OBJECTS)
@@ -19,7 +21,8 @@ $(BUILDDIR)/%.$(OBJEXT): $(SRCDIR)/%.$(SRCEXT)
 	@rm -f $(BUILDDIR)/$*.$(DEPEXT).tmp
 
 clean:
-	$(RM) $(OBJECTS) $(TARGET)
+	$(RM) $(TARGET)
+	rm -rf $(BUILDDIR)
 
 
 .PHONY: all clean

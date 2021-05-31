@@ -1,8 +1,10 @@
 #include "bmp_parser/bmp_parser.h"
 #include "shared_secret/shared_secret.h"
 #include "args/args.h"
+#include "log/log.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir, bool padding);
 static int recover(char * secretPath, uint8_t k, char * shadesPath, bool padding);
@@ -20,17 +22,20 @@ int main(int argc, char *argv[]) {
             return recover(args.secretImage, args.k, args.shadowsDir, args.padding);
 
         default:
-            return 1;
+            LOG_FATAL("Invalid action was recieved");
+            return EXIT_FAILURE;
     }
 }
 
 // TODO(tobi): Manejar logging mejor
 static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir, bool padding) {
     
+    LOG_INFO("Distributing secret: %s creating shades using images from: %s. Shades in: %s.", secretPath, shadesPath, shadesOutputDir);
+
     BMPHeader header;
     BMPImage secretImage;
     if(!bmp_read_file(secretPath, &secretImage, &header)) {
-        return 2;
+        return EXIT_FAILURE;
     }
 
     BMPImagesCollection shades;
@@ -38,8 +43,10 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         // Rollback
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
-        return 2;
+        return EXIT_FAILURE;
     }
+
+    LOG_INFO("Using scheme (%d, %d).", k, shades.size);
 
     uint8_t *secret = bmp_image_data(&secretImage);
     
@@ -48,7 +55,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
         bmp_image_collection_free(&shades);
-        return 2;
+        return EXIT_FAILURE;
     }
     
     if(!shades_persist(shadesOutputDir, &shades, &header)) {
@@ -56,29 +63,27 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
         bmp_image_collection_free(&shades);
-        return 2;
+        return EXIT_FAILURE;
     }
 
     bmp_header_free(&header);
     bmp_image_free(&secretImage);
     bmp_image_collection_free(&shades);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
+
+    LOG_INFO("Recovering secret from shades: %s. Recovered secret: %s",  shadesPath, secretPath);
+
 
     BMPImage secretImage;
 
     BMPImagesCollection shades;
     BMPHeader secretImageHeader;
     if(!bmp_images_from_directory(shadesPath, &shades, &secretImageHeader)) {
-        return 3;
-    }
-
-    if(k <= 0 || shades.size < k) {
-        fprintf(stderr, "ERROR");
-        return 3;
+        return EXIT_FAILURE;
     }
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
@@ -88,7 +93,7 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
         // Rollback
         bmp_header_free(&secretImageHeader);
         bmp_image_collection_free(&shades);
-        return 3;
+        return EXIT_FAILURE;
     }
 
     memcpy(&secretImage, &shades.images[0], sizeof(secretImage));
@@ -99,7 +104,7 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
         free(secret);
         bmp_header_free(&secretImageHeader);
         bmp_image_collection_free(&shades);
-        return 3;
+        return EXIT_FAILURE;
     }
     
     for(size_t i = 0; i < secretImage.height; i++) {
@@ -111,12 +116,12 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
         bmp_header_free(&secretImageHeader);
         bmp_image_free(&secretImage);
         bmp_image_collection_free(&shades);
-        return 3;
+        return EXIT_FAILURE;
     }
 
     bmp_header_free(&secretImageHeader);
     bmp_image_free(&secretImage);
     bmp_image_collection_free(&shades);
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -1,4 +1,5 @@
 #include "galois/galois.h"
+#include "log/log.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -82,7 +83,7 @@ galois2_8_t ginv(galois2_8_t a) {
 
 galois2_8_t gdiv(galois2_8_t a, galois2_8_t b) {
     if(b == GAL_SUM_ID) {
-        printf("Division by 0");
+        LOG_FATAL("Division by 0");
         exit(1);
     }
 	return gmul(a, ginv(b));

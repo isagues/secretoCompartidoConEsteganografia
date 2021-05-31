@@ -1,5 +1,6 @@
 #include "shared_secret/shared_secret.h"
 #include "shared_secret/shades.h"
+#include "log/log.h"
 
 #include <string.h>
 
@@ -12,7 +13,7 @@ uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x) {
 static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k, bool padding) {
     
     if(k < 1) {
-        fprintf(stderr, "k must be at least 2\n");
+        LOG_FATAL("k must be at least 2");
         return false;
     }
     
@@ -20,25 +21,25 @@ static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8
     size_t blockCount = secretSize / k + !!remainder;
 
     if(remainder && !padding) {
-        fprintf(stderr, "secret must be a divisible by k or padding must be enabled\n");
+        LOG_FATAL("Secret must be a divisible by k or padding must be enabled");
         return false;
     } 
     
     if(shades->size < k) {
-        fprintf(stderr, "Not enough shades to process secret were provided. %d shades are needed.", k);
+        LOG_FATAL("Not enough shades to process secret were provided. %d shades are needed.", k);
         return false;
     }
 
     size_t shadeSize = shades->images[0].size;
 
     if(blockCount > shadeSize / 4){
-        fprintf(stderr, "Shades are not long enough to process secret. They must be at least %lu bytes long\n", blockCount * 4);
+        LOG_FATAL("Shades are not long enough to process secret. They must be at least %lu bytes long\n", blockCount * 4);
         return false;
     }
     
     for(size_t i = 1; i < shades->size; i++) {
         if (shades->images[i].size != shadeSize) {
-            fprintf(stderr, "Shades are from different sizes.\n");
+            LOG_FATAL("Shades are from different sizes.");
             return false;
         }
     }
