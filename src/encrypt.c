@@ -2,34 +2,54 @@
 
 #include <string.h>
 
+static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k);
+
 uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x) {
     return galois_poly_eval(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
 }
 
-bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t k) {
+static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k) {
+    
+    if(k < 1) {
+        fprintf(stderr, "k must be at least 2\n");
+        return false;
+    }
+    
+    size_t blockCount = secretSize / k + !!(secretSize % k);
+    
+    if(shades->size < k) {
+        fprintf(stderr, "Not enough shades to process secret were provided. %d shades are needed.", k);
+        return false;
+    }
 
-    //TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
-    // TODO(tobi): Agregar padding para manejar cualquier valor de k
-    // TODO(tobi): Ponerle tope a k, para que no haya stack overflow
-    if(k == 0  || (size % k) != 0) {
-        printf("invalid value for k = %c\n", k);
+    size_t shadeSize = shades->images[0].size;
+
+    if(blockCount > shadeSize / 4){
+        fprintf(stderr, "Shades are not long enough to process secret. They must be at least %lu bytes long\n", blockCount * 4);
         return false;
     }
     
-    size_t blockCount = size / k;
-    
-    if(shades->size < k || blockCount > shades->images[0].size / 4){
-        printf("invalid parameters\n");
-        return false;
-    }
-    
-    size_t shade_size = shades->images[0].size;
     for(size_t i = 1; i < shades->size; i++) {
-        if (shades->images[i].size != shade_size) {
-            perror("Shades are from different sizes.\n");
+        if (shades->images[i].size != shadeSize) {
+            fprintf(stderr, "Shades are from different sizes.\n");
             return false;
         }
     }
+
+    return true;
+}
+
+bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t k) {
+
+    // TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
+    // TODO(tobi): Agregar padding para manejar cualquier valor de k
+    // TODO(tobi): Ponerle tope a k, para que no haya stack overflow
+    if(!validate_input(size, shades, k)) {
+        return false;
+    }
+    
+    size_t remainder = size % k;
+    size_t blockCount = size / k + !!remainder;
 
     //secret block y xValues se inicializan directamente a pesar de ser variable porque es un uint_8 
     //y no van a ser demasiados bytes
@@ -42,7 +62,18 @@ bool encrypt(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t 
         
         memset(xValues, 0, shades->size);
 
-        memcpy(secretBlock, secret + j*k, k); // 1. conseguir k pixeles del offset
+        // 1. conseguir k pixeles del offset
+        if(j != blockCount - 1 || !remainder) {
+            memcpy(secretBlock, secret + j*k, k); 
+        } else {
+            // Agrego padding
+            memcpy(secretBlock, secret + j*k, remainder);
+            memset(secret + j*k + remainder, 0, k - remainder); 
+        }
+
+        if(j == 5358) {
+            printf("hola");
+        }
         
         // Indices de esta forma para poder seguir con la convencion del paper
         for(size_t i = 0; i < shades->size; i++) {
@@ -79,28 +110,13 @@ bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *head
 }
 
 uint8_t * decrypt(size_t size, BMPImagesCollection *shades, uint8_t k) {
-
-    if(k == 0 || (size % k) != 0) {
-        printf("invalid value for k = %c\n", k);
+    if(!validate_input(size, shades, k)) {
         return NULL;
     }
-    
-    size_t blockCount = size / k;
-    
-    if(shades->size < k || blockCount > shades->images[0].size / 4){
-        printf("invalid parameters\n");
-        return NULL;
-    }
-    
-    size_t shade_size = shades->images[0].size;
 
-    for (size_t i = 1; i < shades->size; i++) {
-        if(shades->images[i].size != shade_size) {
-            perror("Shades are from different sizes.\n");
-            return NULL;
-        }
-    }
-
+    size_t remainder = size % k;
+    size_t blockCount = size / k + !!remainder;
+    
     uint8_t *secret = malloc(size * sizeof(*secret));
     if(secret == NULL) {
         return NULL;
@@ -123,7 +139,12 @@ uint8_t * decrypt(size_t size, BMPImagesCollection *shades, uint8_t k) {
 
         galois_lagrange_interpolation(xValues, yValues, secretBlock, k);
 
-        memcpy(secret + j*k, secretBlock, k);
+        if(j != blockCount - 1 || !remainder) {
+            memcpy(secret + j*k, secretBlock, k);
+        } else {
+            // No incluye padding
+            memcpy(secret + j*k, secretBlock, remainder);
+        }
     }
 
     return secret;
