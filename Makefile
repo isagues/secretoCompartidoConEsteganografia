@@ -1,33 +1,47 @@
-# Subfolders
-SRC  			= src
-TEST 			= test
+#The Target Binary Program
+TARGET		:= ss
 
-export PROGRAM  = ss
+#The Directories, Source, Includes, Objects, Binary and Resources
+export SRCDIR		:= $(CURDIR)/src
+export INCDIR		:= $(CURDIR)/inc
+export BUILDDIR		:= $(CURDIR)/obj
+export TESTDIR		:= $(CURDIR)/test
+export TARGETDIR	:= $(CURDIR)
+export RESDIR		:= res
+export SRCEXT		:= c
+export DEPEXT		:= d
+export OBJEXT		:= o
+MAIN 				:= main
 
-export MAIN 	= main
+#Flags, Libraries and Includes
+STD				?= -std=c99
+XFLAGS			?= -ggdb -fsanitize=address -fno-omit-frame-pointer
+export CFLAGS	:= -Wextra -Wall -pedantic -Wno-unused-parameter -Wno-newline-eof -Wno-implicit-fallthrough -Wno-unused-function $(XFLAGS) $(STD)
+export LIB		:=
+export INC		:= -I$(INCDIR)
+export INCDEP	:= -I$(INCDIR)
 
-# Todos los archivos *.c que no sean MAIN
-SOURCES 		:= $(shell find $(CURDIR)/$(SRC) -name '*.c' ! -name *$(MAIN).c -type f)
+#---------------------------------------------------------------------------------
+#DO NOT EDIT BELOW THIS LINE
+#---------------------------------------------------------------------------------
+SOURCES					:= $(shell find $(SRCDIR) -type f -name *.$(SRCEXT) ! -name *$(MAIN).$(SRCEXT))
+export SRC_OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+export OBJECTS			:= $(SRC_OBJECTS) $(BUILDDIR)/$(MAIN).$(OBJEXT)
+export TARGET			:= $(TARGETDIR)/$(TARGET)
 
-XFLAGS 			?= -ggdb -fsanitize=address -fno-omit-frame-pointer
-export CFLAGS	:= -Wextra -Wall -pedantic -Wno-unused-parameter -Wno-newline-eof -Wno-implicit-fallthrough -Wno-unused-function -I$(CURDIR)/$(SRC) $(XFLAGS)
+all: directories
+	cd $(SRCDIR) && $(MAKE)
 
-export LIBRARIES = 
+#Make the Directories
+directories:
+	@mkdir -p $(TARGETDIR)
+	@mkdir -p $(BUILDDIR)
 
-export TARGET 	:= $(CURDIR)/$(PROGRAM)
-
-# Discriminamos MAIN para evitar que colisione con tests
-export MAIN_OBJECT = $(MAIN).o
-export SRC_OBJECTS := $(SOURCES:.c=.o)
-
-all:
-	cd $(SRC) && $(MAKE)
-
-$(TEST):
-	cd $(TEST) && $(MAKE)
+test:
+	cd $(TESTDIR) && $(MAKE)
 
 clean:
-	cd $(SRC) && $(MAKE) clean
-	cd $(TEST) && $(MAKE) clean
+	cd $(SRCDIR) && $(MAKE) clean
+	cd $(TESTDIR) && $(MAKE) clean
 
-.PHONY: all $(TEST) clean
+.PHONY: all test clean

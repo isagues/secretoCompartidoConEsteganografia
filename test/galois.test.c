@@ -1,6 +1,5 @@
-#include <galois.h>
-
-#include "general_utils.h"
+#include "galois/galois.h"
+#include "utils/general_utils.h"
 
 #include <check.h>
 #include <stdbool.h>

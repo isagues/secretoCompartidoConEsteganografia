@@ -1,6 +1,6 @@
-#include "bmp_parser.h"
-#include "encrypt.h"
-#include "arguments.h"
+#include "bmp_parser/bmp_parser.h"
+#include "shared_secret/shared_secret.h"
+#include "args/args.h"
 
 #include <string.h>
 
@@ -43,7 +43,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
 
     uint8_t *secret = bmp_image_data(&secretImage);
     
-    if(!encrypt(secret, secretImage.size, &shades, k, padding)) {
+    if(!ss_distribute(secret, secretImage.size, &shades, k, padding)) {
         // Rollback
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
@@ -51,7 +51,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         return 2;
     }
     
-    if(shades_persist(shadesOutputDir, &shades, &header)) {
+    if(!shades_persist(shadesOutputDir, &shades, &header)) {
         // Rollback
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
@@ -83,7 +83,7 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
 
-    uint8_t *secret = decrypt(secretSize, &shades, k, padding);
+    uint8_t *secret = ss_recover(secretSize, &shades, k, padding);
     if(secret == NULL) {
         // Rollback
         bmp_header_free(&secretImageHeader);

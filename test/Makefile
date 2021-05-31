@@ -1,4 +1,4 @@
-TESTS := $(patsubst %.test.c, %.test, $(wildcard *.test.c))
+TESTS := $(patsubst %.test.$(SRCEXT), %.test, $(wildcard *.test.$(SRCEXT)))
 
 TEST_LIBRARIES = -lcheck -lrt -lpthread -lm -lsubunit
 
@@ -13,9 +13,9 @@ test: $(TESTS)
 
 # Compile
 %.test.tmp: %.test.c $(TEST_OBJECTS)
-	$(CC) $(CFLAGS) $(SRC_OBJECTS) $^ -o $@ $(LIBRARIES) $(TEST_LIBRARIES)
+	$(CC) $(CFLAGS) $(INC) $(SRC_OBJECTS) $^ -o $@ $(LIBRARIES) $(TEST_LIBRARIES)
 
 clean:
-	$(RM) $(patsubst %.test.c, %.test.tmp, $(wildcard *.test.c))
+	$(RM) $(TESTS)
 
 .PHONY: all test clean
