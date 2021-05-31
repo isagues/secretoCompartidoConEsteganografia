@@ -2,6 +2,7 @@
 #define __ARGS_H__
 
 #include "log/log.h"
+#include "galois/galois.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -18,6 +19,7 @@ typedef struct Args {
     char *          shadowsDir;
     char *          shadesOutputDir;
     bool            padding;
+    galois2_8_gen_t galoisGen;
     enum LogLevel   loglevel;
     bool            logQuiet;
     bool            logVerbose;

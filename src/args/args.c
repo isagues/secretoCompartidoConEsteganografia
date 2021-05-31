@@ -31,6 +31,7 @@ bool args_parse(const int argc, char **argv, Args *args) {
     args->loglevel          = LOG_LEVEL_FATAL;
     args->logQuiet          = false;
     args->logVerbose        = false;
+    args->galoisGen         = 0;
 
     int c;
     
@@ -42,7 +43,7 @@ bool args_parse(const int argc, char **argv, Args *args) {
             { 0,           0,                   0, 0 }
         };
 
-        c = getopt_long(argc, argv, "-ho:pvd", long_options, &option_index);
+        c = getopt_long(argc, argv, "-ho:pvdg:", long_options, &option_index);
         
         if (c == -1)
             break;
@@ -67,6 +68,9 @@ bool args_parse(const int argc, char **argv, Args *args) {
                     args->loglevel = LOG_LEVEL_DEBUG;
                 }
                 args->logVerbose = true;
+                break;
+            case 'g':
+                args->galoisGen = atoi(optarg);
                 break;
             case 0xD001:
                 version();
@@ -145,6 +149,7 @@ static void usage(const char *progname) {
         "   -p                          Enable secret padding. Use padding if the secret is not a divisible by `k' instead of failing\n"
         "   -v                          Verbose. Logs about program status.\n"
         "   -d                          Debug. Detailed error logs.\n"
+        "   -g <generator poly>         Define a custom generator poly for galois operations.\n"
         "\n"
         "   --version                   Show version and info.\n"
         "\n",
