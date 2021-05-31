@@ -44,12 +44,12 @@ ss d <path del secreto> <k> <path de las imagenes portadoras> [OPCIONES]
 
 - `-o <path de las sombras>`
   - Permite cambiar el path del directorio donde se dejaran las imagenes.
-  - Tanto los directorios intermedios como el directorio final deberan estar creados de antemano.
+  - Tanto los directorios intermedios como el directorio final deberan ser creados de antemano.
 - `-p`
   - Habilita el uso de padding para el secreto. Util si el k que se desea usar no es divisor del secreto.
 - `-g <polinomio generador>`
   - Permite utilizar un polinomio generador a eleccion.
-  - El polinomio default es: `x^8+x^6+x^5+x^1+1` o, en notacion numerica `355`.
+  - El polinomio default es: `x^8+x^6+x^5+x^1+1` que representa el numero decimal `355`.
 
 ### Recuperacion
 
@@ -61,9 +61,9 @@ ss r <path del secreto> <k> <path de las sombras> [OPCIONES]
   - Indica que se esta realizando una recuperacion.
 - `<path del secreto>`
   - Es el path donde se dejara el secreto recuperado.
-  - Tanto los directorios intermedios como el directorio final deberan estar creados de antemano.
+  - Tanto los directorios intermedios como el directorio final deberan ser creados de antemano.
 - `<k>`
-  - Es el valor k utilziado por el algoritmo.
+  - Es el valor k utilizado por el algoritmo.
   - Debe ser el valor de k que se utilizo cuando se distribuyo el secreto.
   - Mas informacion puede encontrarse en el paper.
 - `<path de las sombras>`
@@ -75,7 +75,7 @@ ss r <path del secreto> <k> <path de las sombras> [OPCIONES]
   - Habilita el uso de padding para el secreto. Debe ser usado si la distribucion fue con padding.
 - `-g <polinomio generador>`
   - Permite utilizar un polinomio generador a eleccion.
-  - El polinomio default es: `x^8+x^6+x^5+x^1+1` o, en notacion numerica `355`.
+  - El polinomio default es: `x^8+x^6+x^5+x^1+1` que representa el numero decimal `355`.
   - El polinomio que se use debe ser el mismo que se uso en la distribucion.
 
 ### Opciones genericas de ejecucion
