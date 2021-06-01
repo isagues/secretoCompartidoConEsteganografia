@@ -82,12 +82,16 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
 
     LOG_INFO("Recovering secret from shades: %s. Recovered secret: %s",  shadesPath, secretPath);
 
-
     BMPImage secretImage;
 
     BMPImagesCollection shades;
     BMPHeader secretImageHeader;
     if(!bmp_images_from_directory(shadesPath, &shades, &secretImageHeader)) {
+        return EXIT_FAILURE;
+    }
+
+    if(shades.size == 0) {
+        LOG_FATAL("No .bmp images were found on directory '%s'", shadesPath);
         return EXIT_FAILURE;
     }
 
@@ -119,7 +123,7 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
     }
 
     if(!bmp_persist_image(secretPath, &secretImageHeader, &secretImage)) {
-        LOG_FATAL("Failed to persist image: %s", secretPath);
+        LOG_FATAL("Failed to persist image '%s'", secretPath);
         
         // Rollback
         bmp_header_free(&secretImageHeader);
