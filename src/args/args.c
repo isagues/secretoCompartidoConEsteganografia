@@ -12,7 +12,7 @@
 
 static void version(void);
 static void usage(const char *progname);
-static int get_non_option_args(const int argc, char **argv, Args *args);
+static bool get_required_args(const int argc, char **argv, Args *args);
 
 
 bool args_parse(const int argc, char **argv, Args *args) {
@@ -85,31 +85,26 @@ bool args_parse(const int argc, char **argv, Args *args) {
         }
     }
 
-    get_non_option_args(argc, argv, args);
-
+    // Default shades dir
     if(args->shadesOutputDir == NULL) {
         args->shadesOutputDir = args->shadowsDir;
     }
 
-    log_set_level(args->loglevel);
-    log_set_quiet(args->logQuiet);
-    log_set_verbose(args->logVerbose);
-
-    return true;
+    return get_required_args(argc, argv, args);
 }
 
-static int get_non_option_args(const int argc, char **argv, Args *args) {
+static bool get_required_args(const int argc, char **argv, Args *args) {
 
     if (argc < MIN_ARG_COUNT) {
         usage(argv[0]);
-        return -1;
+        return false;
     }
 
     args->action = argv[1][0];
 
     if (args->action != DISTRIBUTE && args->action != RECOVER) {
         LOG_FATAL("Invalid first param. Available options are [%c] for distributing the secret and [%c] to recover it.", DISTRIBUTE, RECOVER);
-        return -1;
+        return false;
     }
 
     args->secretImage = argv[2];
@@ -117,15 +112,15 @@ static int get_non_option_args(const int argc, char **argv, Args *args) {
     int tmpK = atoi(argv[3]);
 
     if(tmpK > UINT8_MAX) {
-        LOG_FATAL("Invalid third param. K value should be lower or equal than %d.", UINT8_MAX);
-        return -1;
+        LOG_FATAL("Invalid third param. K value should be lower or equal to %d.", UINT8_MAX);
+        return false;
     }
 
     args->k = tmpK;
 
     args->shadowsDir = argv[4];
 
-    return MIN_ARG_COUNT - 1;
+    return true;
 }
 
 static void version(void) {
@@ -145,11 +140,11 @@ static void usage(const char *progname) {
         "Usage: %s d|r secret_image_relative_path k_value shadows_dir_path [OPTION]...\n"
         "\n"
         "   -h                          Show usage.\n"
-        "   -o <shades output dir>      Only available on distribute mode.\n"
+        "   -o <shades_output_dir>      Only available on distribute mode.\n"
         "   -p                          Enable secret padding. Use padding if the secret is not a divisible by `k' instead of failing\n"
         "   -v                          Verbose. Logs about program status.\n"
         "   -d                          Debug. Detailed error logs.\n"
-        "   -g <generator poly>         Define a custom generator poly for galois operations.\n"
+        "   -g <generator_poly>         Define a custom generator poly for galois operations (int representation). Default is x^8 + x^6 + x^5 + x + 1 (355)\n"
         "\n"
         "   --version                   Show version and info.\n"
         "\n",

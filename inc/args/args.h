@@ -20,7 +20,7 @@ typedef struct Args {
     char *          shadesOutputDir;
     bool            padding;
     galois2_8_gen_t galoisGen;
-    enum LogLevel   loglevel;
+    LogLevel        loglevel;
     bool            logQuiet;
     bool            logVerbose;
 } Args;

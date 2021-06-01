@@ -12,12 +12,15 @@ static int recover(char * secretPath, uint8_t k, char * shadesPath, bool padding
 int main(int argc, char *argv[]) {
 
     Args args;
-    
     if(!args_parse(argc, argv, &args)) {
-        LOG_FATAL("Failed to parse args correctly.");
+        LOG_FATAL("Failed to parse args correctly");
         return EXIT_FAILURE;
     }
-    // Arguments args = {.action='d', .k=4, .secretImage="images/Gustavo300.bmp", .shadowsDir="images"}; // PA TESTING
+    
+    // Inicializacion logs
+    log_set_level(args.loglevel);
+    log_set_quiet(args.logQuiet);
+    log_set_verbose(args.logVerbose);
 
     switch(args.action) {
         case DISTRIBUTE:
@@ -27,7 +30,7 @@ int main(int argc, char *argv[]) {
             return recover(args.secretImage, args.k, args.shadowsDir, args.padding);
 
         default:
-            LOG_FATAL("Invalid action was recieved");
+            LOG_FATAL("Invalid action %c", args.action);
             return EXIT_FAILURE;
     }
 }

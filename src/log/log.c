@@ -24,7 +24,7 @@
 
 #define MAX_CALLBACKS 32
 
-typedef struct {
+typedef struct Callback {
   log_LogFn fn;
   void *udata;
   int level;
@@ -46,7 +46,7 @@ static const char *level_strings[] = {
 
 
 
-static void stdout_callback(log_Event *ev) {
+static void stdout_callback(LogEvent *ev) {
   char buf[16];
   buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 
@@ -64,7 +64,7 @@ static void stdout_callback(log_Event *ev) {
 }
 
 
-static void file_callback(log_Event *ev) {
+static void file_callback(LogEvent *ev) {
   char buf[64];
   buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
   fprintf(
@@ -128,7 +128,7 @@ int log_add_fp(FILE *fp, int level) {
 }
 
 
-static void init_event(log_Event *ev, void *udata) {
+static void init_event(LogEvent *ev, void *udata) {
   if (!ev->time) {
     time_t t = time(NULL);
     ev->time = localtime(&t);
@@ -138,7 +138,7 @@ static void init_event(log_Event *ev, void *udata) {
 
 
 void log_log(int level, const char *file, int line, const char *fmt, ...) {
-  log_Event ev = {
+  LogEvent ev = {
     .fmt   = fmt,
     .file  = file,
     .line  = line,
