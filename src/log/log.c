@@ -24,6 +24,8 @@
 
 #define MAX_CALLBACKS 32
 
+#define LOG_LEVEL_COUNT (LOG_LEVEL_FATAL + 1)
+
 typedef struct Callback {
   log_LogFn fn;
   void *udata;
@@ -37,10 +39,11 @@ static struct {
   bool quiet;
   bool verbose;
   Callback callbacks[MAX_CALLBACKS];
+  bool nonIntrusiveLevels[LOG_LEVEL_COUNT];
 } L;
 
 
-static const char *level_strings[] = {
+static const char *level_strings[LOG_LEVEL_COUNT] = {
   "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
 };
 
@@ -50,12 +53,14 @@ static void stdout_callback(LogEvent *ev) {
   char buf[16];
   buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 
-  // HORA, LEVEL, FILE y LINE 
-  if(L.verbose) {
-    fprintf(ev->udata, "%s %-5s %s:%d: ",
-    buf, level_strings[ev->level], ev->file, ev->line);
-  } else {
-    fprintf(ev->udata, "%-5s: ", level_strings[ev->level]);
+  if(!L.nonIntrusiveLevels[ev->level]) {
+    // HORA, LEVEL, FILE y LINE
+    if(L.verbose) {
+      fprintf(ev->udata, "%s %-5s %s:%d: ",
+      buf, level_strings[ev->level], ev->file, ev->line);
+    } else {
+      fprintf(ev->udata, "%-5s: ", level_strings[ev->level]);
+    }
   }
   // MENSAJE
   vfprintf(ev->udata, ev->fmt, ev->ap);
@@ -109,6 +114,10 @@ void log_set_quiet(bool enable) {
 
 void log_set_verbose(bool enable) {
   L.verbose = enable;
+}
+
+void log_set_non_intrusive_level(LogLevel level) {
+  L.nonIntrusiveLevels[level] = true;
 }
 
 
