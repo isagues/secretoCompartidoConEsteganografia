@@ -85,12 +85,14 @@ bool args_parse(const int argc, char **argv, Args *args) {
         }
     }
 
+    bool ret = get_required_args(argc, argv, args);
+
     // Default shades dir
     if(args->shadesOutputDir == NULL) {
         args->shadesOutputDir = args->shadowsDir;
     }
 
-    return get_required_args(argc, argv, args);
+    return ret;
 }
 
 static bool get_required_args(const int argc, char **argv, Args *args) {
