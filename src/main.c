@@ -13,6 +13,9 @@ static int recover(char * secretPath, uint8_t k, char * shadesPath, galois2_8_ge
 
 int main(int argc, char *argv[]) {
 
+    // Pretty print INFO level
+    log_set_non_intrusive_level(LOG_LEVEL_INFO);
+
     Args args;
     if(!args_parse(argc, argv, &args)) {
         LOG_FATAL("Failed to parse args correctly");
