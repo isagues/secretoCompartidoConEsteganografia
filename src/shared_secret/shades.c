@@ -1,8 +1,7 @@
 #include "shared_secret/shades.h"
-#include "log/log.h"
 
-//source: https://stackoverflow.com/questions/29379006/calculate-parity-bit-from-string-in-c/29381551#29381551
-#define PARITY_BIT(t) ((0x6996u >> ((t ^ (t >> 4)) & 0xf)) & 1)
+#include "log/log.h"
+#include "utils/general_utils.h"
 
 static void shadeblock_coordinates(BMPImage *image, size_t index, size_t * x_row, size_t * x_col){
     //Divido la imagen a la mitad para separarla en cantidad de bloques

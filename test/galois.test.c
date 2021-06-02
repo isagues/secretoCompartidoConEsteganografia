@@ -1,4 +1,5 @@
 #include "galois/galois.h"
+
 #include "utils/general_utils.h"
 
 #include <check.h>
@@ -227,8 +228,6 @@ START_TEST (galois_lagrange_interpolation_test) {
         galois2_8_t p_ret[N(p)];
         galois_lagrange_interpolation(x, y, p_ret, N(p));
 
-        print_uint8_array(p_ret, 5);
-
         for(size_t i = 0; i < N(p); i++) {
             ck_assert_int_eq(p[i], p_ret[i]);
         }
@@ -239,8 +238,6 @@ START_TEST (galois_lagrange_interpolation_test) {
     }
 }
 END_TEST
-
-
 
 Suite * true1_test_suite(void) {
 
