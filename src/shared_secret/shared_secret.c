@@ -9,10 +9,6 @@
 
 static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k, bool padding);
 
-uint8_t encrypt_function(uint8_t * secretBlock, size_t k, uint8_t x) {
-    return galois_poly_eval(secretBlock, k, x);    // s1 + s2*X + ... +sk*X^k-1 mod g(x)
-}
-
 static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k, bool padding) {
     
     if(k < 1) {
@@ -26,17 +22,16 @@ static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8
     if(remainder && !padding) {
         LOG_FATAL("Secret must be a divisible by k or padding must be enabled");
         return false;
-    } 
+    }
     
     if(shades->size < k) {
         LOG_FATAL("Not enough shades to process secret were provided. %d shades are needed.", k);
         return false;
     }
 
-    size_t shadeSize = shades->images[0].size;
-
     for(size_t i = 0; i < shades->size; i++) {
         size_t shadeBlockCount = TO_EVEN(shades->images[i].height) * TO_EVEN(shades->images[i].width) / SHADE_BLOCK_SIZE;
+
         if(blockCount > shadeBlockCount) {
             LOG_FATAL("Shades are not big enough to process secret. They must be at least %lu bytes long\n", blockCount * 4);
             return false;
@@ -58,6 +53,10 @@ bool ss_distribute(uint8_t *secret, size_t size, BMPImagesCollection *shades, ui
     
     size_t remainder = size % k;
     size_t blockCount = size / k + !!remainder;
+
+    if(remainder && padding) {
+        LOG_INFO("Secret image size %"PRIu8" is not divisible by k = %"PRIu8". %"PRIu8" bytes of padding will be added to compensate.", size, k, remainder);
+    }
 
     //secret block y xValues se inicializan directamente a pesar de ser variable porque es un uint_8 
     //y no van a ser demasiados bytes
@@ -87,7 +86,7 @@ bool ss_distribute(uint8_t *secret, size_t size, BMPImagesCollection *shades, ui
 
             xValues[i] = shadeBlock.x;
 
-            tValue = encrypt_function(secretBlock, k, shadeBlock.x); // s1 + s2*X + ... +sk*X^k-1 mod g(x)
+            tValue = galois_poly_eval(secretBlock, k, shadeBlock.x); // s1 + s2*X + ... +sk*X^k-1 mod g(x)
             
             // Distribuir el valor calculado en el shade block
             shadeblock_distribute_t_value(&shadeBlock, tValue);
@@ -103,8 +102,6 @@ bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *head
     bool ret = true;
     char auxPath[PATH_MAX];
     
-    // TODO(tobi): mkdir if dir doesn't exists
-    // Capaz borrar los archivos creados si hubo un error? Probablemente no, paja
     for(size_t i = 0; ret && i < shades->size; i++) {
         snprintf(auxPath, PATH_MAX - 1,"%s/shade_%ld.bmp", dirPath, i);
         ret &= bmp_persist_image(auxPath, header, &shades->images[i]);

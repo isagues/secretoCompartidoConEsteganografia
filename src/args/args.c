@@ -15,7 +15,6 @@ static void version(void);
 static void usage(const char *progname);
 static bool get_required_args(const int argc, char **argv, Args *args);
 
-
 bool args_parse(const int argc, char **argv, Args *args) {
     
     if(args == NULL) {

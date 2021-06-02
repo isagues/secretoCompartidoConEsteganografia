@@ -6,12 +6,12 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir, galois2_8_gen_t galoisGen, bool padding);
 static int recover(char * secretPath, uint8_t k, char * shadesPath, galois2_8_gen_t galoisGen, bool padding);
 
 int main(int argc, char *argv[]) {
-    abort();
 
     Args args;
     if(!args_parse(argc, argv, &args)) {
@@ -40,13 +40,17 @@ int main(int argc, char *argv[]) {
 // TODO(tobi): Manejar logging mejor
 static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir, galois2_8_gen_t galoisGen, bool padding) {
     
-    LOG_INFO("Distributing secret: %s creating shades using images from: %s. Shades in: %s.", secretPath, shadesPath, shadesOutputDir);
+    LOG_INFO("----- Secret Image Distribution -----");
+
+    LOG_INFO("Reading secret image '%s'", secretPath);
 
     BMPHeader header;
     BMPImage secretImage;
     if(!bmp_read_file(secretPath, &secretImage, &header)) {
         return EXIT_FAILURE;
     }
+
+    LOG_INFO("Reading shades from directory '%s'", shadesPath);
 
     BMPImagesCollection shades;
     if(!bmp_images_from_directory(shadesPath, &shades, NULL)) {
@@ -58,7 +62,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
 
     for(size_t i = 0; i < shades.size; i++) {
         if(shades.images[i].height != secretImage.height || shades.images[i].width != secretImage.width) {
-            LOG_FATAL("Secret and shades must have all the same dimensions");
+            LOG_FATAL("Secret image and shades must have all the same dimensions");
 
             // Rollback
             bmp_header_free(&header);
@@ -68,7 +72,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         }
     }
 
-    LOG_INFO("Using scheme (%d, %d).", k, shades.size);
+    LOG_INFO("Distributing secret image using scheme (k = %"PRIu8", n = %"PRIu8", g = %"PRIu8")", k, shades.size, galoisGen);
 
     uint8_t *secret = bmp_image_data(&secretImage);
     
@@ -80,6 +84,8 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         return EXIT_FAILURE;
     }
     
+    LOG_INFO("Persisting tampered shades in directory '%s'", shadesOutputDir);
+
     if(!shades_persist(shadesOutputDir, &shades, &header)) {
         // Rollback
         bmp_header_free(&header);
@@ -88,18 +94,24 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         return EXIT_FAILURE;
     }
 
+    LOG_INFO("Freeing resources...");
+
     bmp_header_free(&header);
     bmp_image_free(&secretImage);
     bmp_image_collection_free(&shades);
+
+    LOG_INFO("Done!");
 
     return EXIT_SUCCESS;
 }
 
 static int recover(char *secretPath, uint8_t k, char *shadesPath, galois2_8_gen_t galoisGen, bool padding){
 
-    LOG_INFO("Recovering secret from shades: %s. Recovered secret: %s",  shadesPath, secretPath);
+    LOG_INFO("----- Secret Image Retrieval -----");
 
     BMPImage secretImage;
+
+    LOG_INFO("Reading tampered shades from directory '%s'", shadesPath);
 
     BMPImagesCollection shades;
     BMPHeader secretImageHeader;
@@ -113,6 +125,8 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, galois2_8_gen_
     }
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
+
+    LOG_INFO("Recovering secret image using scheme using %"PRIu8" shades of at least %"PRIu8"", shades.size, k);
 
     uint8_t *secret = ss_recover(secretSize, &shades, k, galoisGen, padding);
     if(secret == NULL) {
@@ -139,6 +153,8 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, galois2_8_gen_
         secretImage.data[i] = secret + secretImage.width * i;
     }
 
+    LOG_INFO("Persisting secret image at '%s'", secretPath);
+
     if(!bmp_persist_image(secretPath, &secretImageHeader, &secretImage)) {
         LOG_FATAL("Failed to persist image '%s'", secretPath);
         
@@ -149,9 +165,13 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, galois2_8_gen_
         return EXIT_FAILURE;
     }
 
+    LOG_INFO("Freeing resources...");
+
     bmp_header_free(&secretImageHeader);
     bmp_image_free(&secretImage);
     bmp_image_collection_free(&shades);
+
+    LOG_INFO("Done!");
 
     return EXIT_SUCCESS;
 }
