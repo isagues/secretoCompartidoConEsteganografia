@@ -1,5 +1,6 @@
 #include "args/args.h"
 #include "log/log.h"
+#include "galois/galois.h"
 
 #include <stdio.h>     /* for printf */
 #include <stdlib.h>    /* for exit */
@@ -31,7 +32,7 @@ bool args_parse(const int argc, char **argv, Args *args) {
     args->loglevel          = LOG_LEVEL_FATAL;
     args->logQuiet          = false;
     args->logVerbose        = false;
-    args->galoisGen         = 0;
+    args->galoisGen         = GAL_DEFAULT_GENERATOR;
 
     int c;
     

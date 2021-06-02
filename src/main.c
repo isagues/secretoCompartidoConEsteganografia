@@ -2,14 +2,16 @@
 #include "shared_secret/shared_secret.h"
 #include "args/args.h"
 #include "log/log.h"
+#include "galois/galois.h"
 
 #include <string.h>
 #include <stdlib.h>
 
-static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir, bool padding);
-static int recover(char * secretPath, uint8_t k, char * shadesPath, bool padding);
+static int distribute(char * secretPath, uint8_t k, char * shadesPath, char *shadesOutputDir, galois2_8_gen_t galoisGen, bool padding);
+static int recover(char * secretPath, uint8_t k, char * shadesPath, galois2_8_gen_t galoisGen, bool padding);
 
 int main(int argc, char *argv[]) {
+    abort();
 
     Args args;
     if(!args_parse(argc, argv, &args)) {
@@ -24,10 +26,10 @@ int main(int argc, char *argv[]) {
 
     switch(args.action) {
         case DISTRIBUTE:
-            return distribute(args.secretImage, args.k, args.shadowsDir, args.shadesOutputDir, args.padding);
+            return distribute(args.secretImage, args.k, args.shadowsDir, args.shadesOutputDir, args.galoisGen, args.padding);
         
         case RECOVER:
-            return recover(args.secretImage, args.k, args.shadowsDir, args.padding);
+            return recover(args.secretImage, args.k, args.shadowsDir, args.galoisGen, args.padding);
 
         default:
             LOG_FATAL("Invalid action %c", args.action);
@@ -36,7 +38,7 @@ int main(int argc, char *argv[]) {
 }
 
 // TODO(tobi): Manejar logging mejor
-static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir, bool padding) {
+static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shadesOutputDir, galois2_8_gen_t galoisGen, bool padding) {
     
     LOG_INFO("Distributing secret: %s creating shades using images from: %s. Shades in: %s.", secretPath, shadesPath, shadesOutputDir);
 
@@ -58,7 +60,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
 
     uint8_t *secret = bmp_image_data(&secretImage);
     
-    if(!ss_distribute(secret, secretImage.size, &shades, k, padding)) {
+    if(!ss_distribute(secret, secretImage.size, &shades, k, galoisGen, padding)) {
         // Rollback
         bmp_header_free(&header);
         bmp_image_free(&secretImage);
@@ -81,7 +83,7 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
     return EXIT_SUCCESS;
 }
 
-static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
+static int recover(char *secretPath, uint8_t k, char *shadesPath, galois2_8_gen_t galoisGen, bool padding){
 
     LOG_INFO("Recovering secret from shades: %s. Recovered secret: %s",  shadesPath, secretPath);
 
@@ -100,7 +102,7 @@ static int recover(char *secretPath, uint8_t k, char *shadesPath, bool padding){
 
     size_t secretSize = shades.images[0].height * shades.images[0].width;
 
-    uint8_t *secret = ss_recover(secretSize, &shades, k, padding);
+    uint8_t *secret = ss_recover(secretSize, &shades, k, galoisGen, padding);
     if(secret == NULL) {
         // Rollback
         bmp_header_free(&secretImageHeader);

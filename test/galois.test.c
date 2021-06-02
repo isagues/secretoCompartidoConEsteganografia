@@ -34,6 +34,38 @@ START_TEST (galois_division_test) {
 }
 END_TEST
 
+START_TEST (inverses_test) {
+    galois_set_generator(391);
+
+    for(uint16_t x = 1; x <= 255; x++) {
+        ck_assert_int_eq(gmul(x, ginv(x)), GAL_MUL_ID);
+    }
+}
+END_TEST
+
+START_TEST (other_gen_test) {
+    galois_set_generator(391);
+
+    ck_assert_int_eq(gmul(240, 144), 1);
+    ck_assert_int_eq(ginv(240), 144);
+
+    // Multiplication
+    ck_assert_int_eq(gmul(0x05, 0xF0), 62);
+
+    // Inverse
+    ck_assert_int_eq(ginv(0x54), 196);
+    ck_assert_int_eq(ginv(5), 126);
+    ck_assert_int_eq(ginv(125), 153);
+    ck_assert_int_eq(gmul(ginv(0x54), 0x54), GAL_MUL_ID);
+
+    // Division
+    ck_assert_int_eq(gdiv(0x91, 0x91), GAL_MUL_ID);
+    ck_assert_int_eq(gdiv(79, 125), 253);
+    ck_assert_int_eq(gdiv(50, 240), 217);
+
+}
+END_TEST
+
 START_TEST (galois_poly_eval_test) {
     {
         galois2_8_t p[]              = {0x13, 0x75};
@@ -55,6 +87,24 @@ START_TEST (galois_poly_eval_test) {
         galois2_8_t p[]              = {193, 174, 186, 182, 171};
         galois2_8_t x[N(p)]          = {194, 193, 11, 50, 79};
         galois2_8_t expected_y[N(p)] = {166, 80, 140, 41, 83};
+        galois2_8_t y[N(p)];
+
+        // Inicializo y
+        for(uint8_t i = 0; i < N(y); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        for(size_t i = 0; i < N(y); i++) {
+            ck_assert_int_eq(expected_y[i], y[i]);
+        }
+    }
+
+    {
+        galois_set_generator(391);
+
+        galois2_8_t p[]              = {193, 174, 186, 182, 171};
+        galois2_8_t x[N(p)]          = {194, 193, 11, 50, 79};
+        galois2_8_t expected_y[N(p)] = {195,  67, 153, 116,  74};
         galois2_8_t y[N(p)];
 
         // Inicializo y
@@ -161,6 +211,32 @@ START_TEST (galois_lagrange_interpolation_test) {
             ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
         }
     }
+
+    {
+        galois_set_generator(391);
+
+        galois2_8_t p[]     = {193, 174, 186, 182, 171};
+        galois2_8_t x[N(p)] = {194, 193, 11,  50,  79};
+        galois2_8_t y[N(p)];
+
+        // Inicializo y
+        for(uint8_t i = 0; i < N(p); i++) {
+            y[i] = galois_poly_eval(p, N(p), x[i]);
+        }
+
+        galois2_8_t p_ret[N(p)];
+        galois_lagrange_interpolation(x, y, p_ret, N(p));
+
+        print_uint8_array(p_ret, 5);
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(p[i], p_ret[i]);
+        }
+
+        for(size_t i = 0; i < N(p); i++) {
+            ck_assert_int_eq(y[i], galois_poly_eval(p_ret, N(p_ret), x[i]));
+        }
+    }
 }
 END_TEST
 
@@ -174,6 +250,11 @@ Suite * true1_test_suite(void) {
     tcase_add_test(tc, galois_multiplication_test);
     tcase_add_test(tc, galois_inverse_test);
     tcase_add_test(tc, galois_division_test);
+    suite_add_tcase(s, tc);
+
+    tc  = tcase_create("generator 391");
+    tcase_add_test(tc, other_gen_test);
+    tcase_add_test(tc, inverses_test);
     suite_add_tcase(s, tc);
 
     tc  = tcase_create("polynomials");

@@ -1,10 +1,10 @@
-// TODO(tobi): Agregar header - libreria operaciones galois G(2^8)
 #ifndef __GALOIS__LIB__
 #define __GALOIS__LIB__
 
 #include <stdint.h>
+#include <stdbool.h>
 
-#define GAL_GENERATOR_COUNT 53
+#define GAL_GENERATOR_COUNT 16 // phi(2^8 - 1)/8
 
 #define GAL_DEFAULT_GENERATOR 0x163
 
@@ -21,7 +21,7 @@ extern galois2_8_gen_t galois_generators[GAL_GENERATOR_COUNT];
 
 //sources: https://en.wikipedia.org/wiki/Finite_field_arithmetic
 
-void galois_set_generator(galois2_8_gen_t generator);
+bool galois_set_generator(galois2_8_gen_t generator);
 
 galois2_8_t gadd(galois2_8_t a, galois2_8_t b);
 

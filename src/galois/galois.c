@@ -4,15 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdbool.h>
 
 galois2_8_gen_t galois_generators[GAL_GENERATOR_COUNT] = {
-    0x003, 0x007, 0x00B, 0x00D, 0x013, 0x019, 0x025, 0x029, 0x02F,
-    0x037, 0x03B, 0x03D, 0x043, 0x05B, 0x061, 0x067, 0x06D, 0x073,
-    0x083, 0x089, 0x08F, 0x091, 0x09D, 0x0A7, 0x0AB, 0x0B9, 0x0BF,
-    0x0C1, 0x0CB, 0x0D3, 0x0D5, 0x0E5, 0x0EF, 0x0F1, 0x0F7, 0x0FD,
-    0x11B, 0x11D, 0x12B, 0x12D, 0x14C, 0x15F, 0x163, 0x165, 0x169,
-    0x171, 0x187, 0x18D, 0x1A9, 0x1C3, 0x1CF, 0x1E7, 0x1F5,
+    285, 299, 301, 333, 351, 355, 357, 361, 369, 391, 397, 425, 451, 463, 487, 501
 };
 
 static galois2_8_gen_t gal_gen = GAL_DEFAULT_GENERATOR;
@@ -39,12 +33,24 @@ static galois2_8_t gal_inv[16][16] = {
 
 static void calculate_multiplicative_inverses(galois2_8_t ginv[16][16]);
 
-void galois_set_generator(galois2_8_gen_t generator) {
-    // TODO(tobi): Chequear que sea un gen valido
-    if(generator != gal_gen) {
-        gal_gen = generator;
-        galois_multiplicative_inverses(gal_inv);
+bool galois_set_generator(galois2_8_gen_t generator) {
+    if(generator == gal_gen) {
+        return true;
     }
+
+    // Validate generator
+    bool validGen = false;
+    for(size_t i = 0; !validGen && i < GAL_GENERATOR_COUNT; i++) {
+        validGen = galois_generators[i] == generator;
+    }
+    if(!validGen) {
+        return false;
+    }
+
+    gal_gen = generator;
+    calculate_multiplicative_inverses(gal_inv);
+    
+    return true;
 }
 
 // https://en.wikipedia.org/wiki/Finite_field_arithmetic#Program_examples
@@ -84,7 +90,7 @@ galois2_8_t ginv(galois2_8_t a) {
 galois2_8_t gdiv(galois2_8_t a, galois2_8_t b) {
     if(b == GAL_SUM_ID) {
         LOG_FATAL("Division by 0");
-        exit(1);
+        abort();
     }
 	return gmul(a, ginv(b));
 }
@@ -117,11 +123,12 @@ galois2_8_t galois_poly_eval(galois2_8_t coeficients[], uint8_t n, galois2_8_t x
  * O(16 * 16 * 256) - Naive
  */ 
 static void calculate_multiplicative_inverses(galois2_8_t ginv[16][16]) {
-    // EL inverso de la suma no tiene inverso multiplicativo
-    ginv[0][0] = GAL_SUM_ID;
-
     for(uint8_t x = 0; x <= 0x0F; x++) {
-        for(uint8_t y = 1; y <= 0x0F; y++) {
+        for(uint8_t y = 0; y <= 0x0F; y++) {
+            if(x == 0 && y == 0) {
+                // El inverso de la suma no tiene inverso multiplicativo
+                ginv[0][0] = GAL_SUM_ID;
+            }
             // Pruebo posibles numeros de galois hasta que le pego al inverso
             for(uint16_t inv = 1; inv <= GAL_MAX_VAL; inv++) {
                 if(gmul((x << 4) | y, inv) == GAL_MUL_ID) {

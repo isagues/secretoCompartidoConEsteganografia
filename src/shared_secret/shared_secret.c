@@ -3,6 +3,7 @@
 #include "log/log.h"
 
 #include <string.h>
+#include <inttypes.h>
 
 static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8_t k, bool padding);
 
@@ -47,13 +48,14 @@ static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8
     return true;
 }
 
-bool ss_distribute(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t k, bool padding) {
+bool ss_distribute(uint8_t *secret, size_t size, BMPImagesCollection *shades, uint8_t k, galois2_8_gen_t galoisGen, bool padding) {
 
-    // TODO(tobi): Manejar distintos generadores - Llamar a galois_set_generator(generator);
-    // TODO(tobi): Agregar padding para manejar cualquier valor de k
-    // TODO(tobi): Ponerle tope a k, para que no haya stack overflow
     if(!validate_input(size, shades, k, padding)) {
         return false;
+    }
+
+    if(!galois_set_generator(galoisGen)) {
+        LOG_FATAL("Invalid galois generator '%"PRIu16"' configured for secret distribution", galoisGen);
     }
     
     size_t remainder = size % k;
@@ -113,9 +115,13 @@ bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *head
     return ret;
 }
 
-uint8_t * ss_recover(size_t size, BMPImagesCollection *shades, uint8_t k, bool padding) {
+uint8_t * ss_recover(size_t size, BMPImagesCollection *shades, uint8_t k, galois2_8_gen_t galoisGen, bool padding) {
     if(!validate_input(size, shades, k, padding)) {
         return NULL;
+    }
+
+    if(!galois_set_generator(galoisGen)) {
+        LOG_FATAL("Invalid galois generator '%"PRIu16"' configured for secret recovery", galoisGen);
     }
 
     size_t remainder = size % k;

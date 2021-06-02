@@ -5,10 +5,10 @@
 #include "bmp_parser/bmp_parser.h"
 
 
-bool ss_distribute(uint8_t * secret, size_t size, BMPImagesCollection *shades, uint8_t k, bool padding);
+bool ss_distribute(uint8_t * secret, size_t size, BMPImagesCollection *shades, uint8_t k, galois2_8_gen_t galoisGen, bool padding);
 
 bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *header);
 
-uint8_t * ss_recover(size_t size, BMPImagesCollection *shades, uint8_t k, bool padding);
+uint8_t * ss_recover(size_t size, BMPImagesCollection *shades, uint8_t k, galois2_8_gen_t galoisGen, bool padding);
 
 #endif
