@@ -49,6 +49,7 @@ bool ss_distribute(uint8_t *secret, size_t size, BMPImagesCollection *shades, ui
 
     if(!galois_set_generator(galoisGen)) {
         LOG_FATAL("Invalid galois generator '%"PRIu16"' configured for secret distribution", galoisGen);
+        return false;
     }
     
     size_t remainder = size % k;
@@ -117,6 +118,7 @@ uint8_t * ss_recover(size_t size, BMPImagesCollection *shades, uint8_t k, galois
 
     if(!galois_set_generator(galoisGen)) {
         LOG_FATAL("Invalid galois generator '%"PRIu16"' configured for secret recovery", galoisGen);
+        return false;
     }
 
     size_t remainder = size % k;
