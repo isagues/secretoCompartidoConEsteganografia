@@ -26,7 +26,7 @@ El programa permite tanto distribuir un secreto como recuperar un secreto.
 ss d <path del secreto> <k> <path de las imagenes portadoras> [OPCIONES]
 ```
 
-- `d` 
+- `d`
   - Indica que se esta realizando una distribucion.
 - `<path del secreto>`
   - Es el path a la imagen que se desea esconder.
@@ -49,7 +49,7 @@ ss d <path del secreto> <k> <path de las imagenes portadoras> [OPCIONES]
   - Habilita el uso de padding para el secreto. Util si el k que se desea usar no es divisor del secreto.
 - `-g <polinomio generador>`
   - Permite utilizar un polinomio generador a eleccion.
-  - El polinomio default es: `x^8+x^6+x^5+x^1+1` que representa el numero decimal `355`.
+  - El polinomio default es: `x^8+x^6+x^5+x^1+1` representado por el entero `355`.
 
 ### Recuperacion
 
@@ -57,7 +57,7 @@ ss d <path del secreto> <k> <path de las imagenes portadoras> [OPCIONES]
 ss r <path del secreto> <k> <path de las sombras> [OPCIONES]
 ```
 
-- `r` 
+- `r`
   - Indica que se esta realizando una recuperacion.
 - `<path del secreto>`
   - Es el path donde se dejara el secreto recuperado.
@@ -69,13 +69,13 @@ ss r <path del secreto> <k> <path de las sombras> [OPCIONES]
 - `<path de las sombras>`
   - El path del directorio que contiene las sombras que seran utilizadas para recuperar el secreto.
 
-#### Opciones extra para la distribucion
+#### Opciones extra para la recuperacion
 
 - `-p`
   - Habilita el uso de padding para el secreto. Debe ser usado si la distribucion fue con padding.
 - `-g <polinomio generador>`
   - Permite utilizar un polinomio generador a eleccion.
-  - El polinomio default es: `x^8+x^6+x^5+x^1+1` que representa el numero decimal `355`.
+  - El polinomio default es: `x^8+x^6+x^5+x+1` representado por el entero `355`.
   - El polinomio que se use debe ser el mismo que se uso en la distribucion.
 
 ### Opciones genericas de ejecucion
@@ -94,4 +94,3 @@ ss r <path del secreto> <k> <path de las sombras> [OPCIONES]
 ## Creditos
 
 - Libreria de log: [log.c](https://github.com/rxi/log.c).
-
