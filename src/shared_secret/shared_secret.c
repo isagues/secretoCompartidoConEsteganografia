@@ -1,6 +1,8 @@
 #include "shared_secret/shared_secret.h"
+
 #include "shared_secret/shades.h"
 #include "log/log.h"
+#include "utils/general_utils.h"
 
 #include <string.h>
 #include <inttypes.h>
@@ -17,7 +19,7 @@ static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8
         LOG_FATAL("k must be at least 2");
         return false;
     }
-    
+
     size_t remainder = secretSize % k;
     size_t blockCount = secretSize / k + !!remainder;
 
@@ -33,18 +35,14 @@ static bool validate_input(size_t secretSize, BMPImagesCollection *shades, uint8
 
     size_t shadeSize = shades->images[0].size;
 
-    if(blockCount > shadeSize / 4){
-        LOG_FATAL("Shades are not long enough to process secret. They must be at least %lu bytes long\n", blockCount * 4);
-        return false;
-    }
-    
-    for(size_t i = 1; i < shades->size; i++) {
-        if (shades->images[i].size != shadeSize) {
-            LOG_FATAL("Shades are from different sizes.");
+    for(size_t i = 0; i < shades->size; i++) {
+        size_t shadeBlockCount = TO_EVEN(shades->images[i].height) * TO_EVEN(shades->images[i].width) / SHADE_BLOCK_SIZE;
+        if(blockCount > shadeBlockCount) {
+            LOG_FATAL("Shades are not big enough to process secret. They must be at least %lu bytes long\n", blockCount * 4);
             return false;
         }
     }
-
+    
     return true;
 }
 

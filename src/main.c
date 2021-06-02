@@ -56,6 +56,18 @@ static int distribute(char *secretPath, uint8_t k, char *shadesPath, char *shade
         return EXIT_FAILURE;
     }
 
+    for(size_t i = 0; i < shades.size; i++) {
+        if(shades.images[i].height != secretImage.height || shades.images[i].width != secretImage.width) {
+            LOG_FATAL("Secret and shades must have all the same dimensions");
+
+            // Rollback
+            bmp_header_free(&header);
+            bmp_image_free(&secretImage);
+            bmp_image_collection_free(&shades);
+            return EXIT_FAILURE;
+        }
+    }
+
     LOG_INFO("Using scheme (%d, %d).", k, shades.size);
 
     uint8_t *secret = bmp_image_data(&secretImage);

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "bmp_parser/bmp_parser.h"
 
-#define SHADES_NUMBER 8
+#define SHADE_BLOCK_SIZE 4
 
 typedef struct ShadeBlock {
     uint8_t x;
