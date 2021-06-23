@@ -30,8 +30,6 @@ uint8_t * bmp_image_data(BMPImage *image);
 
 bool bmp_read_file(char * path, BMPImage *img, BMPHeader *header);
 
-void bmp_swap_rows(BMPImage *img);
-
 bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *imagesCollection, BMPHeader *sampleHeader);
 
 void bmp_image_collection_free(BMPImagesCollection *collection);

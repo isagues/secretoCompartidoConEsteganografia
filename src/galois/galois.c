@@ -139,10 +139,6 @@ static void calculate_multiplicative_inverses(galois2_8_t ginv[16][16]) {
     }
 }
 
-void galois_multiplicative_inverses(galois2_8_t ginv[16][16]) {
-    memcpy(ginv, gal_inv, sizeof(gal_inv));
-}
-
 /**
  * Calcula la produtoria intermedia del termino i del coeficiente r.
  * 

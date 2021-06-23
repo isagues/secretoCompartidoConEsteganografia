@@ -1,6 +1,4 @@
 #include "args/args.h"
-#include "log/log.h"
-#include "galois/galois.h"
 
 #include <stdio.h>     /* for printf */
 #include <stdlib.h>    /* for exit */
@@ -33,9 +31,9 @@ bool args_parse(const int argc, char **argv, Args *args) {
     args->logVerbose        = false;
     args->galoisGen         = GAL_DEFAULT_GENERATOR;
 
-    int c;
-    
     while (true) {
+
+        int c;
 
         int option_index = 0;
         static struct option long_options[] = {

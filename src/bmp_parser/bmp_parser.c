@@ -103,14 +103,6 @@ bool bmp_read_file(char *path, BMPImage *img, BMPHeader *header) {
     return true;
 }
 
-void bmp_swap_rows(BMPImage *img) {
-
-    for(int low = 0, high = img->height - 1; low < high; low++, high--) {
-        uint8_t *temp = img->data[low];
-        img->data[low] = img->data[high];
-        img->data[high] = temp;
-    }
-}
 
 static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, uint32_t height) {
     // Pongo el puntero del archivo en el lugar correcto
@@ -127,7 +119,7 @@ static uint8_t** bmp_read_data(FILE * fStream, uint32_t offset, uint32_t width, 
     }
     
     // Aloco toda la memoria contigua con un esquema de doble indireccion
-    data[0] = malloc(height * width * sizeof(sizeof(*data[0])));
+    data[0] = malloc(height * width * sizeof(*data[0]));
     if(data[0] == NULL) {
         LOG_FATAL("Failed to allocate memory for data - %s", strerror(errno));
         free(data);
@@ -213,10 +205,9 @@ bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *images
             closedir(FD);
             return false;
         }
-        if(tmpHeader != NULL) {
-            // La primera vez (si no es null) le carga la info al header, y luego el resto de las veces en NULL (no hace nada).
-            tmpHeader = NULL;
-        }
+        // La primera vez (si no es null) le carga la info al header, y luego el resto de las veces en NULL (no hace nada).
+        tmpHeader = NULL;
+        
     }
 
     closedir(FD);

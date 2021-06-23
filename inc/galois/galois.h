@@ -33,8 +33,6 @@ galois2_8_t gdiv(galois2_8_t a, galois2_8_t b);
 
 galois2_8_t gpow(galois2_8_t base, galois2_8_t exp);
 
-void galois_multiplicative_inverses(galois2_8_t ginv[16][16]);
-
 galois2_8_t galois_poly_eval(galois2_8_t coeficients[], uint8_t n, galois2_8_t x_value);
 
 

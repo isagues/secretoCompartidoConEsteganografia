@@ -76,7 +76,7 @@ bool ss_distribute(uint8_t *secret, size_t size, BMPImagesCollection *shades, ui
         } else {
             // Agrego padding
             memcpy(secretBlock, secret + j*k, remainder);
-            memset(secret + j*k + remainder, 0, k - remainder); 
+            memset(secretBlock + remainder, 0, k - remainder); 
         }
         
         // Indices de esta forma para poder seguir con la convencion del paper
@@ -104,7 +104,7 @@ bool shades_persist(char * dirPath, BMPImagesCollection *shades, BMPHeader *head
     char auxPath[PATH_MAX];
     
     for(size_t i = 0; ret && i < shades->size; i++) {
-        snprintf(auxPath, PATH_MAX - 1,"%s/shade_%ld.bmp", dirPath, i);
+        snprintf(auxPath, PATH_MAX - 1,"%s/shade_%zu.bmp", dirPath, i);
         ret &= bmp_persist_image(auxPath, header, &shades->images[i]);
     }
 
@@ -118,7 +118,7 @@ uint8_t * ss_recover(size_t size, BMPImagesCollection *shades, uint8_t k, galois
 
     if(!galois_set_generator(galoisGen)) {
         LOG_FATAL("Invalid galois generator '%"PRIu16"' configured for secret recovery", galoisGen);
-        return false;
+        return NULL;
     }
 
     size_t remainder = size % k;
