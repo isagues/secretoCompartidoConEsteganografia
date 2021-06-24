@@ -6,7 +6,9 @@
 #include <dirent.h>
 #include <errno.h>
 
-//TODO(nacho, faus): Por ahora esta con packing. Habria que ver cuando funciona y si son los casos de uso esperados.
+static const char BMP_EXTENSION[] = ".bmp";
+static const size_t BMP_EXTENSION_LEN = sizeof(BMP_EXTENSION);
+
 typedef struct BMPFileHeader {
     uint8_t     type[2];
     uint32_t    fileSize;
@@ -174,11 +176,8 @@ bool bmp_images_from_directory(char * directoryPath, BMPImagesCollection *images
 
     while((in_file = readdir(FD))) {
 
-        if(!strcmp (in_file->d_name, "."))
-            continue;
-        if(!strcmp (in_file->d_name, ".."))    
-            continue;
-        if(in_file->d_reclen < sizeof(".bmp") || !strcmp (in_file->d_name + in_file->d_reclen - 5, ".bmp"))    
+        size_t pathLen = strlen(in_file->d_name);
+        if(pathLen < BMP_EXTENSION_LEN + 1 || strcmp(in_file->d_name + pathLen - BMP_EXTENSION_LEN + 1, BMP_EXTENSION))
             continue;
 
         snprintf(filename, PATH_MAX - 1, "%s/%s", directoryPath, in_file->d_name);
